@@ -834,10 +834,25 @@ function startFromTourOps(p){
 function pendingTourOps(){
   try{const s=sessionStorage.getItem("ec_tourops");if(!s)return null;sessionStorage.removeItem("ec_tourops");return JSON.parse(s)}catch(_){return null}
 }
+let ssoTicket=null;
 function captureTourOpsHash(){
-  const m=location.hash.match(/^#tourops=([A-Za-z0-9_\-]+)$/); if(!m)return;
-  try{const p=decodePayload(m[1]);sessionStorage.setItem("ec_tourops",JSON.stringify(p))}catch(_){toast("That TourOps link couldn't be read.")}
+  const h=location.hash.slice(1); if(!/^(tourops|sso)=/.test(h))return;
+  const prm=new URLSearchParams(h), payload=prm.get("tourops"), sso=prm.get("sso");
+  if(payload&&/^[A-Za-z0-9_\-]+$/.test(payload)){try{const p=decodePayload(payload);sessionStorage.setItem("ec_tourops",JSON.stringify(p))}catch(_){toast("That TourOps link couldn't be read.")}}
+  const m=sso&&sso.match(/^(tourops|website)\.([A-Za-z0-9_\-]{32,128})$/); if(m)ssoTicket={from:m[1],code:m[2]};
   history.replaceState(null,"",location.pathname+location.search+"#list");
+}
+async function ssoSignIn(t){
+  const where=t.from==="tourops"?"TourOps":"the website";
+  $("#siMsg").textContent="Signing you in from "+where+"…"; $("#signinForm").hidden=true;
+  let msg="";
+  try{
+    const {data,error}=await sb.functions.invoke("itinerary-sso",{body:t});
+    if(error){try{msg=(await error.context.json()).error}catch(_){} msg=msg||errText(error)}
+    else{const r=await sb.auth.verifyOtp({type:"magiclink",token_hash:data.token_hash}); if(r.error)msg=errText(r.error); else return true}
+  }catch(e){msg=errText(e)}
+  $("#signinForm").hidden=false; $("#siMsg").textContent=(msg||"Couldn't sign you in automatically.")+" You can also sign in with your work email below.";
+  return false;
 }
 // An example of what TourOps sends, for trying the import in the demo.
 function exampleTourOps(){
@@ -1620,7 +1635,10 @@ function boot(){
   if(!window.supabase){$("#view-signin").hidden=false;$("#siMsg").textContent="The sign-in service didn't load. Check your connection and reload the page.";$("#si-send").disabled=true;return}
   sb=window.supabase.createClient(CONFIG.supabaseUrl,CONFIG.supabaseKey,{auth:{flowType:"implicit",detectSessionInUrl:true,persistSession:true,autoRefreshToken:true}});
   applyMode(); show("signin");
-  sb.auth.onAuthStateChange((_e,s)=>setTimeout(()=>handleSession(s),0));
+  const go=()=>sb.auth.onAuthStateChange((_e,s)=>setTimeout(()=>handleSession(s),0));
+  if(ssoTicket){const t=ssoTicket;ssoTicket=null;
+    sb.auth.getSession().then(async({data})=>{if(!data.session)await ssoSignIn(t);go()});}
+  else go();
 }
 let leaveArmed=0;
 function leaveEditor(go){
