@@ -385,6 +385,10 @@ details.itm[open] > summary .chev{transform:rotate(180deg)}
 }
 
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+.bklist{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto;margin-top:6px}
+.bkrow{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--line,#e5ddd1);border-radius:8px;padding:8px 10px;background:#fff}
+.bkinfo{display:flex;flex-direction:column;gap:2px;min-width:0}.bkinfo .hint{overflow:hidden;text-overflow:ellipsis}
+.sugg{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}.sugg img{width:72px;height:54px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid transparent}.sugg img:hover,.sugg img:focus{border-color:var(--orange,#ff8000)}
 </style>
 </head>
 <body>
@@ -829,6 +833,7 @@ function fromTourOps(p){
 function startFromTourOps(p){
   let r; try{r=fromTourOps(p)}catch(e){toast("That TourOps booking couldn't be read.");return}
   cur=r.trip; dirty=true; openId=null; show("edit"); setSaved("Not saved yet",true);
+  const trip=cur; loadWebCat().then(()=>{if(cur!==trip)return;let n=0;trip.data.days.forEach(d=>d.items.forEach(it=>{if(it.type==="activity"&&fillFromSources(it))n++}));if(n){markDirty();renderDays();toast("Added photos and descriptions from the website for "+n+" tour"+(n>1?"s":"")+".")}});
   toast("Imported "+r.count+" excursion"+(r.count===1?"":"s")+(p.source==="website"?" from website order":" from TourOps")+(r.missing.length?". "+r.missing.length+" not in the library yet.":"."));
 }
 function pendingTourOps(){
@@ -875,6 +880,40 @@ async function websiteCatalog(){
   const r=await fetch(CONFIG.website+"wp-json/wc/store/v1/products?per_page=100");
   if(!r.ok)throw new Error("The website answered "+r.status);
   return (await r.json()).filter(p=>p.type!=="grouped").map(p=>({id:p.id,name:htmlText(p.name),link:p.permalink,short:htmlText(p.short_description),desc:htmlText(p.description),images:(p.images||[]).slice(0,5).map(i=>i.src)}));
+}
+// Website catalogue, loaded once per visit: photos and descriptions for tours without a library entry.
+let webCat=null,webCatP=null;
+function loadWebCat(){
+  if(webCat)return Promise.resolve(webCat);
+  if(!webCatP)webCatP=websiteCatalog().then(x=>(webCat=x)).catch(()=>{webCatP=null;return []});
+  return webCatP;
+}
+function nameScore(a,n){const m=norm(a);if(!m||!n)return 0;if(m===n)return 100;if(m.includes(n)||n.includes(m))return 60+Math.min(m.length,n.length)/Math.max(m.length,n.length)*30;
+  const A=new Set(m.split(" ")),hit=n.split(" ").filter(w=>w.length>3&&A.has(w)).length;return hit>=2?20+hit*10:0}
+function matchWeb(name){
+  if(!webCat)return null; const n=norm(name); let top=null,ts=0;
+  webCat.forEach(p=>{const sc=nameScore(p.name,n)+((p.images||[]).length?3:0);if(sc>ts){ts=sc;top=p}});
+  return ts>=40?top:null;
+}
+const LIBKIND={stay:"stay",activity:"activity",transfer:"transfer"};
+function photoSources(it){
+  const out=[]; if(!it.title||!LIBKIND[it.type])return out;
+  const lib=matchLibrary(it.title,LIBKIND[it.type]); if(lib)out.push(...((lib.content&&lib.content.images)||[]));
+  if(it.type==="activity"){const w=matchWeb(it.title);if(w)out.push(...(w.images||[]))}
+  return [...new Set(out.filter(x=>safeImg(x)&&(!demo||!/^https?:/.test(x))))]; // the demo can't show remote photos
+}
+// Fill an item that has no photos from its library entry or website page (and its text, if empty).
+function fillFromSources(it){
+  if(!it.title||(it.images&&it.images.length))return false;
+  const src=photoSources(it); if(!src.length)return false;
+  it.images=src.slice(0,5);
+  const lib=matchLibrary(it.title,LIBKIND[it.type]);
+  if(lib&&lib.content)["headline","about","includes","bring","sustainability","link","place","duration"].forEach(k=>{if(!it[k]&&lib.content[k])it[k]=clone(lib.content[k])});
+  if(it.type==="activity"){const w=matchWeb(it.title);if(w){
+    if(!it.headline&&(w.short||w.desc))it.headline=firstSentence(w.short||w.desc);
+    if(!it.about&&(w.desc||w.short))it.about=(w.desc||w.short).slice(0,1600);
+    if(!it.link&&w.link)it.link=w.link}}
+  return true;
 }
 async function importWebsite(btn){
   const msg=$("#libMsg"); btn.disabled=true; msg.textContent="Reading the tours on experiencescaribbean.com…";
@@ -931,14 +970,48 @@ function checklistCard(t){
 }
 
 // Start screen for a new itinerary
+// ---------- TourOps bookings, read directly by the builder ----------
+const TOUROPS_FN="https://rixvrkzfsfepberctsdh.supabase.co/functions/v1/itinerary-bookings";
+async function tourOpsCall(body){
+  if(demo){const p=exampleTourOps(),b=p.booking;
+    if(body.action==="get")return {payload:p};
+    return {bookings:[{id:b.id,number:b.number,guest_name:b.guest_name,booking_date:b.booking_date,party_size:b.party_size,trips:p.excursions.length,first_tour:p.excursions[0].tour}]}}
+  const {data:{session}}=await sb.auth.getSession(); if(!session)throw new Error("Sign in again.");
+  let r; try{r=await fetch(TOUROPS_FN,{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify(body)})}
+  catch(_){throw new Error("Couldn't reach TourOps. Check your connection and try again.")}
+  const j=await r.json().catch(()=>({})); if(!r.ok)throw new Error(j.error||("TourOps answered "+r.status)); return j;
+}
+function bookingPicker(close){
+  const q=el("input",{type:"search",placeholder:"Guest name, booking number or email","aria-label":"Find a TourOps booking"});
+  const list=el("div",{class:"bklist",role:"list"}), msg=el("p",{class:"hint",style:"margin:0",role:"status"});
+  let seq=0;
+  const run=async()=>{const my=++seq; msg.textContent="Loading bookings from TourOps…"; list.replaceChildren();
+    let res; try{res=await tourOpsCall({action:"search",q:q.value.trim()})}catch(e){if(my===seq)msg.textContent=errText(e);return}
+    if(my!==seq)return; const bk=res.bookings||[];
+    msg.textContent=bk.length?"Upcoming and recent bookings"+(q.value.trim()?" matching \""+q.value.trim()+"\"":"")+":":"No bookings found"+(q.value.trim()?" for \""+q.value.trim()+"\"":"")+".";
+    bk.forEach(b=>{const has=trips.find(t=>!t.isTemplate&&b.number&&t.ref===b.number);
+      const use=el("button",{type:"button",class:"btn small"+(has?" ghost":" orange")},has?"Make another":"Create itinerary");
+      use.onclick=async()=>{use.disabled=true;use.textContent="Importing…";
+        try{const r=await tourOpsCall({action:"get",id:b.id});close();startFromTourOps(r.payload)}catch(e){use.disabled=false;use.textContent="Create itinerary";msg.textContent=errText(e)}};
+      list.append(el("div",{class:"bkrow",role:"listitem"},
+        el("div",{class:"bkinfo"},el("b",{text:b.guest_name||"(no name)"}),
+          el("span",{class:"hint",text:[b.number,b.booking_date?fmtShort(b.booking_date):"",b.party_size?b.party_size+" guest"+(b.party_size>1?"s":""):"",b.trips?b.trips+" excursion"+(b.trips>1?"s":""):"",b.first_tour].filter(Boolean).join(" · ")}),
+          has?el("span",{class:"hint",style:"color:var(--orange-ink)",text:"Already has an itinerary: "+(has.title||"")}):null),
+        use))});
+  };
+  let tmr; q.addEventListener("input",()=>{clearTimeout(tmr);tmr=setTimeout(run,350)});
+  setTimeout(run,0);
+  return el("div",{class:"choice"},el("h3",{text:"From a TourOps booking"}),
+    el("p",{class:"hint",text:"Recommended. Pick the booking: the guest, contact details, dates, excursions, pick-ups, guides and drivers come across, and each tour gets its photos and description from the library or the website."}),
+    q,msg,list);
+}
 function openNewDialog(){
   const dlg=$("#newDlg"), body=$("#newDlgBody"); body.replaceChildren();
   const close=()=>{dlg.hidden=true};
   const tpls=trips.filter(t=>t.isTemplate);
   const sel=el("select",{"aria-label":"Template"},tpls.map(t=>el("option",{value:t.id,text:t.title+(nightsLabel(t)?" ("+nightsLabel(t)+")":"")})));
   body.append(
-    el("div",{class:"choice"},el("h3",{text:"From a TourOps booking"}),el("p",{class:"hint",text:"Recommended. In TourOps, open the booking and press \"Create guest itinerary\". The guest, contact details, party size, dates, excursions, pick-ups, guides and drivers come across, and each tour is matched to its photos and description in the library."}),
-      demo?el("button",{type:"button",class:"btn orange",onclick:()=>{close();startFromTourOps(exampleTourOps())}},"Try it with an example booking"):null),
+    bookingPicker(close),
     el("div",{class:"choice"},el("h3",{text:"From a template"}),tpls.length?el("div",{class:"row"},sel,el("button",{type:"button",class:"btn",onclick:()=>{close();const t=trips.find(x=>x.id===sel.value);if(t)duplicate(t,false)}},"Start")):el("p",{class:"hint",text:"No templates yet. Open any itinerary and press \"Save as template\" to reuse it."})),
     el("div",{class:"choice"},el("h3",{text:"Start from scratch"}),el("p",{class:"hint",text:"An empty itinerary. Add days, hotels and tours yourself."}),el("button",{type:"button",class:"btn ghost",onclick:()=>{close();cur=blankTrip();dirty=false;openId=null;show("edit")}},"Blank itinerary")));
   dlg.hidden=false; $("#newDlgClose").onclick=close; dlg.onclick=e=>{if(e.target===dlg)close()};
@@ -1050,9 +1123,18 @@ function galleryField(it,label){
   url.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addUrl()}});
   const file=el("input",{type:"file",id:fileId,accept:"image/*",multiple:true,class:"vh"});
   file.addEventListener("change",async()=>{for(const f of [...file.files]){const d=await shrink(f,1400);if(d)it.images.push(d)}file.value="";markDirty();draw()});
-  draw();
-  return el("div",{class:"field full"},el("label",{for:id},label,el("span",{class:"hint"}," Guests swipe through these. Landscape photos work best.")),list,
-    el("div",{class:"imgfield"},url,el("button",{type:"button",class:"btn ghost small",onclick:addUrl},"Add link"),el("label",{class:"btn ghost small",for:fileId},"Upload"),file));
+  const sugg=el("div",{class:"sugg"});
+  const drawSugg=()=>{const cand=photoSources(it).filter(x=>!it.images.includes(x)).slice(0,10);sugg.replaceChildren();
+    if(!cand.length){if(!it.images.length)sugg.append(el("span",{class:"hint",text:it.title?"No matching photos in the library or on the website. Add a link, or upload (optional).":"Type the name above and matching photos from the library and website appear here."}));return}
+    sugg.append(el("span",{class:"hint",text:"From the library and website, tap to add:"}),
+      ...cand.map(src=>{const im=el("img",{src:safeImg(src),alt:"Suggested photo",tabindex:"0",title:"Add this photo"});const add=()=>{it.images.push(src);markDirty();redraw()};im.onclick=add;im.onkeydown=e=>{if(e.key==="Enter")add()};return im}),
+      cand.length>1?el("button",{type:"button",class:"btn ghost small",onclick:()=>{it.images.push(...cand.slice(0,Math.max(0,8-it.images.length)));markDirty();redraw()}},"Add all"):null)};
+  const redraw=()=>{draw();drawSugg()};
+  redraw(); loadWebCat().then(drawSugg);
+  const node=el("div",{class:"field full"},el("label",{for:id},label,el("span",{class:"hint"}," Guests swipe through these. Landscape photos work best.")),list,sugg,
+    el("div",{class:"imgfield"},url,el("button",{type:"button",class:"btn ghost small",onclick:addUrl},"Add link"),el("label",{class:"btn ghost small",for:fileId},"Upload (optional)"),file));
+  node._refresh=redraw;
+  return node;
 }
 async function shrink(file,max){
   try{let b;try{b=await createImageBitmap(file,{imageOrientation:"from-image"})}catch(_){b=await createImageBitmap(file)}
@@ -1137,12 +1219,14 @@ function itemEditor(it,di,ii){
   const det=el("details",{class:"itm",open:openId===it.id}, el("summary",{},ic,st,el("span",{class:"chev"},icon("chev",18))));
   det.addEventListener("toggle",()=>{if(det.open)openId=it.id;else if(openId===it.id)openId=null});
   const main=el("div",{class:"grid"}), more=el("div",{class:"grid"});
+  let gal=null, titleIn=null;
   FIELDS[it.type].forEach(([k,label,kind,o={}])=>{
     const target=o.more?more:main;
-    if(kind==="gallery")target.append(galleryField(it,label));
+    if(kind==="gallery"){gal=galleryField(it,label);target.append(gal)}
     else if(kind==="image")target.append(imageField(it,k,label));
-    else target.append(field(it,k,label,kind,Object.assign({},o,{on:()=>{upd();if(it.type==="stay"&&(k==="nights"||k==="title"))refreshAuto()}})));
+    else{const f=field(it,k,label,kind,Object.assign({},o,{on:()=>{upd();if(it.type==="stay"&&(k==="nights"||k==="title"))refreshAuto()}}));if(k==="title")titleIn=f.querySelector("input");target.append(f)}
   });
+  if(gal&&titleIn)titleIn.addEventListener("change",()=>loadWebCat().then(()=>{if(fillFromSources(it)){markDirty();toast("Added photos for "+it.title+" from the "+(matchLibrary(it.title,LIBKIND[it.type])?"library":"website")+".")}gal._refresh()}));
   const body=el("div",{class:"itmbody"},main);
   if(more.childNodes.length)body.append(el("div",{class:"lbl",style:"margin-top:2px;color:var(--orange-ink);text-transform:uppercase;letter-spacing:.06em;font-size:12px",text:"Shown under \"More details\""}),more);
   const mv=el("select",{"aria-label":"Move to day"},el("option",{value:"",text:"Move to day…"}),t.data.days.map((_,k)=>k===di?null:el("option",{value:k,text:"Day "+(k+1)+(t.start?" · "+fmtShort(addDays(t.start,k)):"")})));
@@ -1589,7 +1673,7 @@ async function handleSession(session){
   if(error||!data||!data.active){staff=null;applyMode();show("signin");$("#siMsg").textContent="You're signed in as "+session.user.email+", but that email isn't on the active team list.";$("#signoutBtn").hidden=false;return}
   if(!(data.roles||[]).includes("itineraries")){staff=null;applyMode();show("signin");$("#signinForm").hidden=true;$("#codeForm").hidden=true;
     $("#siMsg").textContent="You're signed in as "+session.user.email+", but you don't have the Itineraries tick yet. Ask an admin to tick Itineraries for you on the Team page of the incident register (reports.experiencescaribbean.com), then reload this page.";$("#signoutBtn").hidden=false;return}
-  staff=data; applyMode(); await Promise.all([loadTrips(),loadLibrary()]);
+  staff=data; applyMode(); loadWebCat(); await Promise.all([loadTrips(),loadLibrary()]);
   const pend=pendingTourOps(); if(pend){startFromTourOps(pend);return}
   const h=location.hash.slice(1); show(h==="library"?"library":"list");
 }
