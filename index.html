@@ -1165,9 +1165,14 @@ function renderEditor(){
   const endF=field(t,"end","Departure date","date",{on:()=>resize()});
   const nightsNote=el("p",{class:"hint",style:"margin:0;grid-column:1/-1"});
   function resize(){
-    if(t.start&&t.end&&t.end>=t.start){
+    // Ignore half-typed dates (e.g. year "0002" while typing) and never drop a day that has anything on it.
+    const ok=x=>/^(20[2-9]\d)-\d{2}-\d{2}$/.test(x||"");
+    if(!ok(t.start)||!ok(t.end)){nightsNote.textContent="";return}
+    if(t.end>=t.start){
       const n=daysBetween(t.start,t.end)+1;
-      if(n<t.data.days.length){const extra=t.data.days.slice(n).some(d=>d.items.length);if(extra){toast("The last days still have items. Move or delete them first.");t.end=addDays(t.start,t.data.days.length-1);endF.querySelector("input").value=t.end;}else t.data.days.length=n}
+      if(n>60){nightsNote.textContent="That's more than 60 days. Check the dates.";return}
+      if(n<t.data.days.length){const used=d=>d.items.length||(d.title||"").trim()||d.image;
+        if(t.data.days.slice(n).some(used)){toast("The last days still have something on them. Move or delete it first.");t.end=addDays(t.start,t.data.days.length-1);endF.querySelector("input").value=t.end;}else t.data.days.length=n}
     }
     normaliseDays(t); nightsNote.textContent=t.start&&t.end?nightsOf(t)+" nights, "+dayCount(t)+" days":""; renderDays();
   }
@@ -1213,7 +1218,7 @@ function renderDays(){
   });
   const addEnd=()=>{if(t.start){t.end=addDays(t.end||t.start,1);normaliseDays(t);markDirty();renderEditor()}else{t.data.days.push({title:"",items:[]});markDirty();renderDays()}
     const n=t.data.days.length-1;setTimeout(()=>{const e=$("#eday"+n);e&&e.scrollIntoView({block:"start"})},0);toast("Day "+(n+1)+" added"+(t.start?" ("+fmtShort(addDays(t.start,n))+")":"")+".")};
-  const addStart=()=>{t.start=addDays(t.start,-1);t.data.days.unshift({title:"",items:[]});markDirty();renderEditor();toast("Added a day before: the trip now starts "+fmtShort(t.start)+".")};
+  const addStart=()=>{t.start=addDays(t.start,-1);t.data.days.unshift({title:"",items:[]});markDirty();renderEditor();toast("Added a new Day 1 ("+fmtShort(t.start)+"). Everything else moved down one day.")};
   const last=t.data.days[t.data.days.length-1];
   box.append(el("div",{class:"row",style:"gap:8px;flex-wrap:wrap"},
     el("button",{type:"button",class:"btn small",onclick:addEnd},"+ Add a day at the end"),
