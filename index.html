@@ -1010,6 +1010,47 @@ async function tourOpsCall(body){
   catch(_){throw new Error("Couldn't reach TourOps. Check your connection and try again.")}
   const j=await r.json().catch(()=>({})); if(!r.ok)throw new Error(j.error||("TourOps answered "+r.status)); return j;
 }
+// TourOps tours and activities for the Activity dropdown (names only; cached for the session).
+let toCatP=null;
+function tourOpsCatalog(){
+  if(!toCatP)toCatP=(demo?Promise.resolve({tours:[{name:"Waitukubuli Trail Section 1",activities:["Scotts Head","Soufriere Sulphur Springs"]},{name:"Roseau Valley Explorer",activities:["Trafalgar Falls","Titou Gorge"]}],activities:["Scotts Head","Soufriere Sulphur Springs","Titou Gorge","Trafalgar Falls","Whale watching"]}):tourOpsCall({action:"catalog"}))
+    .then(r=>{const clean=a=>[...new Set((a||[]).map(x=>String(x||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+      return {tours:clean((r.tours||[]).map(t=>typeof t==="string"?t:t&&t.name)),activities:clean((r.activities||[]).map(a=>typeof a==="string"?a:a&&a.name))}})
+    .catch(e=>{toCatP=null;throw e});
+  return toCatP;
+}
+const CUSTOM="__custom__";
+function activityPicker(it,titleField,titleIn,onPick){
+  const id="f"+(++fid);
+  const sel=el("select",{id,"aria-label":"Activity from TourOps"},el("option",{value:"",text:"Loading TourOps activities…"}));
+  const note=el("span",{class:"hint"});
+  const wrap=el("div",{class:"field"},el("label",{for:id},"Activity",note),sel);
+  const lab=titleField.querySelector("label"); if(lab)lab.firstChild.textContent="Custom activity name";
+  titleIn.placeholder="Type the activity name";
+  const showCustom=on=>{titleField.hidden=!on};
+  showCustom(true);
+  tourOpsCatalog().then(c=>{
+    const all=new Set([...c.tours,...c.activities]);
+    sel.replaceChildren(el("option",{value:"",text:"Choose a tour or activity…"}));
+    if(c.tours.length)sel.append(el("optgroup",{label:"TourOps tours"},c.tours.map(n=>el("option",{value:"t:"+n,text:n}))));
+    if(c.activities.length)sel.append(el("optgroup",{label:"TourOps activities"},c.activities.map(n=>el("option",{value:"a:"+n,text:n}))));
+    sel.append(el("option",{value:CUSTOM,text:"+ Custom activity (type your own)"}));
+    const v=(it.title||"").trim();
+    if(!v){sel.value="";showCustom(false)}
+    else if(all.has(v)){sel.value=(c.tours.includes(v)?"t:":"a:")+v;showCustom(false)}
+    else{sel.value=CUSTOM;showCustom(true)}
+  },e=>{sel.replaceChildren(el("option",{value:CUSTOM,text:"TourOps list unavailable: type the name below"}));sel.value=CUSTOM;sel.disabled=true;note.textContent=" "+errText(e);showCustom(true)});
+  sel.addEventListener("change",()=>{
+    if(sel.value===CUSTOM){showCustom(true);if(TOUROPS_NAMES.has((it.title||"").trim())){titleIn.value="";titleIn.dispatchEvent(new Event("input"))}titleIn.focus();return}
+    if(!sel.value){showCustom(false);return}
+    const name=sel.value.slice(2); showCustom(false);
+    titleIn.value=name; titleIn.dispatchEvent(new Event("input")); titleIn.dispatchEvent(new Event("change"));
+    if(onPick)onPick(name);
+  });
+  tourOpsCatalog().then(c=>{c.tours.concat(c.activities).forEach(n=>TOUROPS_NAMES.add(n))},()=>{});
+  return wrap;
+}
+const TOUROPS_NAMES=new Set();
 function bookingPicker(close){
   const q=el("input",{type:"search",placeholder:"Guest name, booking number or email","aria-label":"Find a TourOps booking"});
   const list=el("div",{class:"bklist",role:"list"}), msg=el("p",{class:"hint",style:"margin:0",role:"status"});
@@ -1268,6 +1309,7 @@ function itemEditor(it,di,ii){
     else if(kind==="image")target.append(imageField(it,k,label));
     else{const f=field(it,k,label,kind,Object.assign({},o,{on:()=>{upd();if(it.type==="stay"&&(k==="nights"||k==="title"))refreshAuto()}}));if(k==="title")titleIn=f.querySelector("input");target.append(f)}
   });
+  if(it.type==="activity"&&titleIn){const tf=titleIn.closest(".field");tf.before(activityPicker(it,tf,titleIn))}
   if(gal&&titleIn)titleIn.addEventListener("change",()=>loadWebCat().then(()=>{if(fillFromSources(it)){markDirty();toast("Added photos for "+it.title+" from the "+(matchLibrary(it.title,LIBKIND[it.type])?"library":"website")+".")}gal._refresh()}));
   const body=el("div",{class:"itmbody"},main);
   if(more.childNodes.length)body.append(el("div",{class:"lbl",style:"margin-top:2px;color:var(--orange-ink);text-transform:uppercase;letter-spacing:.06em;font-size:12px",text:"Shown under \"More details\""}),more);
