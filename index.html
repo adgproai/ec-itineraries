@@ -420,7 +420,8 @@ details.itm[open] > summary .chev{transform:rotate(180deg)}
 <main class="staff wrap">
   <!-- SIGN IN -->
   <section id="view-signin" class="signin stack" hidden>
-    <div class="pagehead"><div><h1>Staff sign in</h1><p class="lede">Sign in with the same work email you use for the incident register. You need the Itineraries tick on the register&#8217;s Team page.</p></div></div>
+    <div class="pagehead"><div><h1>Staff sign in</h1><p class="lede">Use your TourOps or incident register account. You need the Itineraries role in both, under the same email.</p></div></div>
+    <div class="stack" id="toursignin" style="gap:6px"><a class="btn orange" id="si-tourops" href="https://tourops.experiencescaribbean.com/guest-itineraries">Sign in with TourOps</a><p class="hint" style="margin:0">Opens TourOps (sign in there if asked) and brings you straight back, signed in.</p><p class="hint" style="margin:6px 0 0"><b>Or</b> use your incident register email: we email you a 6-digit code.</p></div>
     <form id="signinForm" class="stack" novalidate>
       <div class="field"><label for="si-email">Work email</label><input type="email" id="si-email" autocomplete="email"></div>
       <div class="row"><button class="btn" type="submit" id="si-send">Email me a sign-in link</button></div>
@@ -858,11 +859,11 @@ function captureTourOpsHash(){
   const h=location.hash.slice(1); if(!/^(tourops|sso)=/.test(h))return;
   const prm=new URLSearchParams(h), payload=prm.get("tourops"), sso=prm.get("sso");
   if(payload&&/^[A-Za-z0-9_\-]+$/.test(payload)){try{const p=decodePayload(payload);sessionStorage.setItem("ec_tourops",JSON.stringify(p))}catch(_){toast("That TourOps link couldn't be read.")}}
-  const m=sso&&sso.match(/^(tourops|website)\.([A-Za-z0-9_\-]{32,128})$/); if(m)ssoTicket={from:m[1],code:m[2]};
+  const m=sso&&sso.match(/^(tourops)\.([A-Za-z0-9_\-]{32,128})$/); if(m)ssoTicket={from:m[1],code:m[2]};
   history.replaceState(null,"",location.pathname+location.search+"#list");
 }
 async function ssoSignIn(t){
-  const where=t.from==="tourops"?"TourOps":"the website";
+  const where="TourOps";
   $("#siMsg").textContent="Signing you in from "+where+"…"; $("#signinForm").hidden=true;
   let msg="";
   try{
