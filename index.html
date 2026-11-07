@@ -706,9 +706,9 @@ let sb=null, staff=null, trips=[], library=[], cur=null, dirty=false, saving=fal
 
 // ---------- database rows <-> trips ----------
 function fromRow(r){return {id:r.id,token:r.token,status:r.status,isTemplate:r.is_template,ref:r.booking_ref||"",title:r.title||"",guest:r.guest_name||"",start:r.start_date||"",end:r.end_date||"",
-  views:r.view_count||0,lastViewed:r.last_viewed_at?Date.parse(r.last_viewed_at):null,updatedAt:r.updated_at?Date.parse(r.updated_at):null,publishedAt:r.published_at?Date.parse(r.published_at):null,data:r.data||null}}
+  views:r.view_count||0,lastViewed:r.last_viewed_at?Date.parse(r.last_viewed_at):null,updatedAt:r.updated_at?Date.parse(r.updated_at):null,publishedAt:r.published_at?Date.parse(r.published_at):null,sentAt:r.sent_at?Date.parse(r.sent_at):null,sentTo:r.sent_to||"",sentCount:r.sent_count||0,data:r.data||null}}
 function toRow(t){return {booking_ref:t.ref.trim()||null,title:t.title.trim()||"New trip",guest_name:t.guest.trim()||null,start_date:t.start||null,end_date:t.end||null,status:t.status,is_template:t.isTemplate,data:t.data}}
-const LIST_COLS="id,token,status,is_template,booking_ref,title,guest_name,start_date,end_date,view_count,last_viewed_at,updated_at,published_at";
+const LIST_COLS="id,token,status,is_template,booking_ref,title,guest_name,start_date,end_date,view_count,last_viewed_at,updated_at,published_at,sent_at,sent_to,sent_count";
 
 async function loadTrips(){
   if(demo)return;
@@ -739,7 +739,7 @@ async function saveTrip(quiet){
     const q=cur.id?sb.from("itineraries").update(row).eq("id",cur.id).select(LIST_COLS).single():sb.from("itineraries").insert(row).select(LIST_COLS).single();
     const {data,error}=await q;
     if(error){saving=false;setSaved("Not saved",true);toast(errText(error));return false}
-    const f=fromRow(data); Object.assign(cur,{id:f.id,token:f.token,updatedAt:f.updatedAt,publishedAt:f.publishedAt,views:f.views,lastViewed:f.lastViewed});
+    const f=fromRow(data); Object.assign(cur,{id:f.id,token:f.token,updatedAt:f.updatedAt,publishedAt:f.publishedAt,views:f.views,lastViewed:f.lastViewed,sentAt:f.sentAt,sentTo:f.sentTo,sentCount:f.sentCount});
     const i=trips.findIndex(t=>t.id===f.id); f.data=null; if(i>=0)trips[i]=f;else trips.push(f);
   }
   saving=false; dirty=false; setSaved("Saved "+new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})); renderSide(); if(!quiet)toast("Itinerary saved"); return true;
@@ -957,7 +957,8 @@ function showGuest(t,preview){
 // ---------- list ----------
 function tripStatus(t){
   if(t.isTemplate)return el("span",{class:"pill tpl",text:"Template"});
-  if(t.status==="published")return el("span",{class:"pill pub",text:"Sent to guest"});
+  if(t.status==="published"&&t.sentAt)return el("span",{class:"pill pub",text:"Emailed to guest"});
+  if(t.status==="published")return el("span",{class:"pill pub",text:"Published"});
   return el("span",{class:"pill",text:"Draft"});
 }
 function renderList(){
@@ -1156,6 +1157,27 @@ function renderAddSelects(){document.querySelectorAll(".libsel").forEach(fillLib
 function addItem(di,it){it.id=it.id||uid();Object.keys(it).forEach(k=>it[k]===undefined&&delete it[k]);cur.data.days[di].items.push(it);openId=it.id;markDirty();renderDays();const n=document.querySelector("details.itm[open] input,details.itm[open] textarea");if(n){n.focus();n.scrollIntoView({block:"center"})}}
 
 function guestLink(t){return t.token?CONFIG.siteUrl+"?t="+t.token:""}
+const EMAIL_OK=/^[^\s<>@,;]+@[^\s<>@,;]+\.[a-z]{2,}$/i;
+let sending=false;
+async function emailGuest(){
+  const t=cur; if(!t||sending)return false;
+  const to=(t.data.guestEmail||"").trim();
+  if(!EMAIL_OK.test(to)){toast("Add the guest's email address first.");const f=document.querySelector('#edSide input[type=email]');if(f)f.focus();return false}
+  if(dirty&&!(await saveTrip(true)))return false;
+  sending=true; renderSide();
+  let res=null, err="";
+  if(demo){await new Promise(r=>setTimeout(r,600));res={ok:true,to,sent_at:new Date().toISOString(),sent_count:(t.sentCount||0)+1}}
+  else{
+    try{const {data,error}=await sb.functions.invoke("send-itinerary",{body:{id:t.id}});
+      if(error){let m="";try{m=(await error.context.json()).error}catch(_){}err=m||errText(error)}else res=data}
+    catch(e){err=errText(e)}
+  }
+  sending=false;
+  if(res&&res.ok){Object.assign(t,{sentAt:Date.parse(res.sent_at)||Date.now(),sentTo:res.to,sentCount:res.sent_count||((t.sentCount||0)+1)});
+    const i=trips.findIndex(x=>x.id===t.id);if(i>=0)Object.assign(trips[i],{sentAt:t.sentAt,sentTo:t.sentTo,sentCount:t.sentCount});
+    toast("Emailed to "+res.to+(demo?" (demo: nothing was really sent)":""));renderSide();return true}
+  renderSide(); toast("Not sent: "+(err||"try again")); return false;
+}
 function shareText(t){
   const first=(t.guest||"").split(/\s*(?:&|and|,)\s*/)[0]||"there";
   return "Hi "+first+", your itinerary for "+(t.title||"your trip")+(t.start?" ("+fmtRange(t.start,t.end)+")":"")+" is ready: "+guestLink(t)+"\n\nIt has your transfers, hotels, tours and our contact numbers, and it updates automatically if anything changes. Any questions, just reply here.\n\n"+((t.data.consultant&&t.data.consultant.name)||CONFIG.company);
@@ -1176,9 +1198,12 @@ function renderSide(){
     const inp=el("input",{type:"text",readonly:true,value:link,"aria-label":"Guest link"});
     card.append(el("div",{class:"sharelink"},inp,el("button",{type:"button",class:"btn small",onclick:async()=>{inp.select();try{await navigator.clipboard.writeText(link);toast("Link copied")}catch(_){toast("Select the link and copy it")}}},"Copy")));
     const phone=digits(t.data.guestPhone);
+    const to=(t.data.guestEmail||"").trim();
+    const sendBtn=el("button",{type:"button",class:t.sentAt?"btn ghost small":"btn orange",disabled:sending||!EMAIL_OK.test(to)},sending?"Sending…":(t.sentAt?"Email it again":"Email to guest"));
+    card.append(EMAIL_OK.test(to)&&!sending?armed(sendBtn,"Tap again to send to "+to,emailGuest):sendBtn);
+    card.append(el("p",{class:"hint",style:"margin:0"+(t.sentAt?";color:var(--ink);font-weight:700":""),text:t.sentAt?"Emailed to "+(t.sentTo||to)+", "+fmtStamp(t.sentAt)+(t.sentCount>1?" ("+t.sentCount+" times)":"")+".":(EMAIL_OK.test(to)?"Sends a branded email with the link from itineraries@experiencescaribbean.com. Replies come to the consultant.":"Add the guest's email above to send it.")}));
     card.append(el("div",{class:"row"},
-      el("a",{class:"wa",href:"https://wa.me/"+(phone||"")+"?text="+encodeURIComponent(shareText(t)),target:"_blank",rel:"noopener"},icon("wa"),"Send on WhatsApp"),
-      el("a",{class:"btn ghost small",href:"mailto:"+encodeURIComponent(t.data.guestEmail||"")+"?subject="+encodeURIComponent("Your itinerary: "+(t.title||"your trip"))+"&body="+encodeURIComponent(shareText(t))},icon("mail"),"Email")));
+      el("a",{class:"wa",href:"https://wa.me/"+(phone||"")+"?text="+encodeURIComponent(shareText(t)),target:"_blank",rel:"noopener"},icon("wa"),"Send on WhatsApp")));
     card.append(el("p",{class:"hint",style:"margin:0",text:t.views?"Opened by the guest "+t.views+" time"+(t.views>1?"s":"")+", last "+fmtStamp(t.lastViewed)+".":"The guest hasn't opened it yet."}));
     if(dirty)card.append(el("p",{class:"hint",style:"margin:0;color:var(--orange-ink);font-weight:700",text:"Save to update what the guest sees."}));
     card.append(armed(el("button",{type:"button",class:"btn danger small"},"Unpublish"),"Tap again: the link stops working",async()=>{t.status="draft";if(!(await saveTrip(true))){t.status="published";return}toast("Unpublished. The guest's link no longer opens.");renderSide()}));
@@ -1186,7 +1211,16 @@ function renderSide(){
     card.append(el("p",{class:"hint",style:"margin:0",text:"Draft: only staff can see it. Publish to get the guest's link. You can keep editing afterwards; the guest sees each saved change."}));
     const missing=[!t.title&&"a trip name",!t.guest&&"the guest's name",!(t.start&&t.end)&&"the dates"].filter(Boolean);
     if(missing.length)card.append(el("p",{class:"hint",style:"margin:0",text:"Before publishing, add "+missing.join(", ")+"."}));
-    card.append(el("button",{type:"button",class:"btn orange",disabled:!!missing.length,onclick:async()=>{t.status="published";if(!(await saveTrip(true))){t.status="draft";return}toast("Published. Copy the link or send it on WhatsApp.");renderSide()}},"Publish and get the link"));
+    const canMail=EMAIL_OK.test((t.data.guestEmail||"").trim());
+    const publish=async(andSend)=>{t.status="published";if(!(await saveTrip(true))){t.status="draft";return}
+      if(andSend){await emailGuest()}else{toast("Published. Email it, copy the link or send it on WhatsApp.");renderSide()}};
+    if(canMail&&!missing.length){
+      card.append(armed(el("button",{type:"button",class:"btn orange"},"Publish and email to guest"),"Tap again to send to "+t.data.guestEmail.trim(),()=>publish(true)));
+      card.append(el("button",{type:"button",class:"btn ghost small",onclick:()=>publish(false)},"Publish only (send later)"));
+    } else {
+      if(!missing.length&&!canMail)card.append(el("p",{class:"hint",style:"margin:0",text:"Add the guest's email above to publish and email it in one step."}));
+      card.append(el("button",{type:"button",class:"btn orange",disabled:!!missing.length,onclick:()=>publish(false)},"Publish and get the link"));
+    }
   }
   s.append(card);
   s.append(el("div",{class:"card stack"},el("b",{text:"Reuse"}),
