@@ -855,7 +855,7 @@ function fromTourOps(p){
 function startFromTourOps(p){
   let r; try{r=fromTourOps(p)}catch(e){toast("That TourOps booking couldn't be read.");return}
   cur=r.trip; dirty=true; openId=null; show("edit"); setSaved("Not saved yet",true);
-  const trip=cur; loadWebCat().then(()=>{if(cur!==trip)return;let n=0;trip.data.days.forEach(d=>d.items.forEach(it=>{if(it.type==="activity"&&fillFromSources(it))n++}));if(n){markDirty();renderDays();toast("Added photos and descriptions from the website for "+n+" tour"+(n>1?"s":"")+".")}});
+  const trip=cur, all=[].concat(...trip.data.days.map(d=>d.items)); Promise.all(all.map(loadSourcesFor)).then(()=>{if(cur!==trip)return;let n=0;all.forEach(it=>{if((it.type==="activity"||it.type==="stay")&&fillFromSources(it))n++});if(n){markDirty();renderDays();toast("Added photos from the website to "+n+" tour"+(n>1?"s and hotels":" or hotel")+".")}});
   toast("Imported "+r.count+" excursion"+(r.count===1?"":"s")+(p.source==="website"?" from website order":" from TourOps")+(r.missing.length?". "+r.missing.length+" not in the library yet.":"."));
 }
 function pendingTourOps(){
@@ -924,11 +924,38 @@ function matchWeb(name){
   webCat.forEach(p=>{const sc=nameScore(p.name,n)+((p.images||[]).length?3:0);if(sc>ts){ts=sc;top=p}});
   return ts>=40?top:null;
 }
+// Hotel photos from the website's media library, found by the hotel's name (e.g. "Jungle Bay").
+const HOTEL_PICS=new Map(), HOTEL_P=new Map();
+const HOTEL_STOP=new Set("hotel resort the villa villas lodge inn guest house guesthouse cottage cottages dominica and spa eco retreat suites apartments beach".split(" "));
+const hotelKey=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
+function loadHotelPics(title){
+  const k=hotelKey(title); if(!k||demo)return Promise.resolve([]);
+  if(HOTEL_P.has(k))return HOTEL_P.get(k);
+  const words=k.split(" ").filter(w=>w.length>2&&!HOTEL_STOP.has(w));
+  if(!words.length){HOTEL_PICS.set(k,[]);return Promise.resolve([])}
+  const p=fetch(CONFIG.website+"wp-json/wp/v2/media?per_page=60&media_type=image&search="+encodeURIComponent(words.join(" "))+"&_fields=title,alt_text,source_url,media_details")
+    .then(r=>r.ok?r.json():[]).then(list=>{
+      const seen=new Set(), out=[];
+      (Array.isArray(list)?list:[]).forEach(m=>{
+        const src=String(m.source_url||""); if(!/^https:\/\//.test(src)||/original-backup/i.test(src))return;
+        const hay=hotelKey(((m.title&&m.title.rendered)||"")+" "+(m.alt_text||"")+" "+src.split("/").pop()).replace(/ /g,"");
+        if(!words.every(w=>hay.includes(w)))return;
+        let base=src.split("/").pop().toLowerCase().replace(/\.(jpe?g|png|webp)$/,""); while(/-(\d{1,2}|scaled)$/.test(base))base=base.replace(/-(\d{1,2}|scaled)$/,"");
+        if(seen.has(base))return; seen.add(base);
+        const sz=(m.media_details&&m.media_details.sizes)||{};
+        out.push((sz.large&&sz.large.source_url)||(sz.medium_large&&sz.medium_large.source_url)||src);
+      });
+      HOTEL_PICS.set(k,out); return out;
+    }).catch(()=>{HOTEL_P.delete(k);return []});
+  HOTEL_P.set(k,p); return p;
+}
+function loadSourcesFor(it){return Promise.all([loadWebCat(),it&&it.type==="stay"?loadHotelPics(it.title):null])}
 const LIBKIND={stay:"stay",activity:"activity",transfer:"transfer"};
 function photoSources(it){
   const out=[]; if(!it.title||!LIBKIND[it.type])return out;
   const lib=matchLibrary(it.title,LIBKIND[it.type]); if(lib)out.push(...((lib.content&&lib.content.images)||[]));
   if(it.type==="activity"){const w=matchWeb(it.title);if(w)out.push(...(w.images||[]))}
+  if(it.type==="stay")out.push(...(HOTEL_PICS.get(hotelKey(it.title))||[]));
   return [...new Set(out.filter(x=>safeImg(x)&&(!demo||!/^https?:/.test(x))))]; // the demo can't show remote photos
 }
 // Fill an item that has no photos from its library entry or website page (and its text, if empty).
@@ -1200,7 +1227,7 @@ function galleryField(it,label){
       ...cand.map(src=>{const im=el("img",{src:safeImg(src),alt:"Suggested photo",tabindex:"0",title:"Add this photo"});const add=()=>{it.images.push(src);markDirty();redraw()};im.onclick=add;im.onkeydown=e=>{if(e.key==="Enter")add()};return im}),
       cand.length>1?el("button",{type:"button",class:"btn ghost small",onclick:()=>{it.images.push(...cand.slice(0,Math.max(0,8-it.images.length)));markDirty();redraw()}},"Add all"):null)};
   const redraw=()=>{draw();drawSugg()};
-  redraw(); loadWebCat().then(drawSugg);
+  redraw(); loadSourcesFor(it).then(drawSugg);
   const node=el("div",{class:"field full"},el("label",{for:id},label,el("span",{class:"hint"}," Guests swipe through these. Landscape photos work best.")),list,sugg,
     el("div",{class:"imgfield"},url,el("button",{type:"button",class:"btn ghost small",onclick:addUrl},"Add link"),el("label",{class:"btn ghost small",for:fileId},"Upload (optional)"),file));
   node._refresh=redraw;
@@ -1310,7 +1337,7 @@ function itemEditor(it,di,ii){
     else{const f=field(it,k,label,kind,Object.assign({},o,{on:()=>{upd();if(it.type==="stay"&&(k==="nights"||k==="title"))refreshAuto()}}));if(k==="title")titleIn=f.querySelector("input");target.append(f)}
   });
   if(it.type==="activity"&&titleIn){const tf=titleIn.closest(".field");tf.before(activityPicker(it,tf,titleIn))}
-  if(gal&&titleIn)titleIn.addEventListener("change",()=>loadWebCat().then(()=>{if(fillFromSources(it)){markDirty();toast("Added photos for "+it.title+" from the "+(matchLibrary(it.title,LIBKIND[it.type])?"library":"website")+".")}gal._refresh()}));
+  if(gal&&titleIn)titleIn.addEventListener("change",()=>loadSourcesFor(it).then(()=>{if(fillFromSources(it)){markDirty();toast("Added photos for "+it.title+" from the "+(matchLibrary(it.title,LIBKIND[it.type])?"library":"website")+".")}gal._refresh()}));
   const body=el("div",{class:"itmbody"},main);
   if(more.childNodes.length)body.append(el("div",{class:"lbl",style:"margin-top:2px;color:var(--orange-ink);text-transform:uppercase;letter-spacing:.06em;font-size:12px",text:"Shown under \"More details\""}),more);
   const mv=el("select",{"aria-label":"Move to day"},el("option",{value:"",text:"Move to day…"}),t.data.days.map((_,k)=>k===di?null:el("option",{value:k,text:"Day "+(k+1)+(t.start?" · "+fmtShort(addDays(t.start,k)):"")})));
