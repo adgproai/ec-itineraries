@@ -1573,6 +1573,7 @@ function renderGuest(t,root,opts={}){
   if(!t){root.append(el("div",{class:"g-msg"},el("h1",{text:"Itinerary not found"}),el("p",{text:"This link may have been replaced or switched off. Please contact us and we'll send you the current one."}),contactLine()));return}
   t=clone(t); normaliseDays(t); const d=t.data, auto=autoLines(t), sts=stays(t), IM=CONFIG.images||{};
   const secs=[], main=el("main",{class:"gv-main"});
+  const subs=[]; // activities and hotels with photos: the side panel follows them as they're read
   const S=(id,label,sub,img,cls)=>{const n=el("section",{class:"gv-sec"+(cls?" "+cls:""),id});img=safeImg(img);if(img)n.append(el("figure",{class:"gv-banner"},el("img",{src:img,alt:"",loading:secs.length>1?"lazy":"eager"})));secs.push({id,label,sub,img,node:n});main.append(n);return n};
   const H=txt=>el("h2",{class:"gv-h",text:txt});
   const go=id=>{const e=root.querySelector("#"+id);if(e)e.scrollIntoView({block:"start"});closeMenu()};
@@ -1652,7 +1653,7 @@ function renderGuest(t,root,opts={}){
       day.title?el("div",{class:"tt",text:day.title}):null));
     const evs=el("div",{class:"gv-evs"});
     auto[i].checkout.forEach(s=>evs.append(autoEvent("checkout","Check out from "+s.title)));
-    day.items.forEach(it=>evs.append(eventBlock(it)));
+    day.items.forEach(it=>{const n=eventBlock(it);evs.append(n);const im=imgsOf(it)[0];if(im)subs.push({id:"gv-day"+i,label:"Day "+(i+1),sub:it.title||"",img:im,node:n})});
     auto[i].overnight.forEach(s=>evs.append(autoEvent("overnight","Overnight at "+s.title,[s.room,s.meal?"("+s.meal+")":""].filter(Boolean).join(" "))));
     if(!evs.childNodes.length)evs.append(autoEvent("star","A free day to explore at your own pace","Ask us for ideas."));
     sec.append(evs);
@@ -1715,9 +1716,14 @@ function renderGuest(t,root,opts={}){
   // watch which section is being read: inside the right panel on a computer, the page on a phone
   const rightCol=wrap.querySelector(".gv-right"), wide=window.matchMedia("(min-width:720px)");
   const watch=()=>{if(!("IntersectionObserver" in window))return;if(guestIO)guestIO.disconnect();
-    guestIO=new IntersectionObserver(es=>{es.forEach(e=>{if(!e.isIntersecting)return;const s=secs.find(x=>x.node===e.target);if(!s)return;setLeft(s);
-      navList.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.id===s.id))})},{root:wide.matches?rightCol:null,rootMargin:"-40% 0px -55% 0px"});
-    secs.forEach(s=>guestIO.observe(s.node))};
+    const inBand=new Set(); let lastSub=null;
+    guestIO=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)inBand.add(e.target);else inBand.delete(e.target)});
+      const sec=secs.find(x=>inBand.has(x.node)); let sub=subs.find(x=>inBand.has(x.node));
+      if(sub)lastSub=sub; else if(lastSub&&sec&&sec.id===lastSub.id)sub=lastSub;
+      const sc=sub?secs.find(x=>x.id===sub.id):sec; if(!sc)return;
+      setLeft(sub?Object.assign({},sc,{img:sub.img,sub:sub.sub}):sc);
+      navList.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.id===sc.id))},{root:wide.matches?rightCol:null,rootMargin:"-40% 0px -55% 0px"});
+    secs.forEach(s=>guestIO.observe(s.node)); subs.forEach(s=>guestIO.observe(s.node))};
   watch(); if(wide.addEventListener)wide.addEventListener("change",watch);
 }
 function contactLine(){return el("p",{},"Call or WhatsApp ",el("a",{href:"tel:"+CONFIG.helpTel},CONFIG.helpNumber),".")}
