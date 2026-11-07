@@ -369,7 +369,9 @@ details.itm[open] > summary .chev{transform:rotate(180deg)}
 .gv-clist li{background:#f6f7f9;border-radius:10px;padding:10px 12px;font-size:14.5px;overflow-wrap:anywhere}
 .gv-clist li b{display:block;font:700 11px "Montserrat",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--soft)}
 .g-qr{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center;background:#fff;border:1px solid var(--rule);border-left:4px solid var(--lime);border-radius:14px;padding:18px 20px;margin-top:26px}
+.g-qr a.btn{color:#fff;text-decoration:none}
 .g-qr .code{width:150px;height:auto;display:block;border-radius:10px}
+.g-qr .codelink{display:block;border-radius:10px;width:max-content}.g-qr .codelink:focus-visible{outline:3px solid var(--orange,#f08a24);outline-offset:3px}
 .g-qr h3{font:700 17px "Montserrat",sans-serif!important;margin-bottom:6px!important}
 .g-qr p{margin:0 0 8px;font-size:14.5px}
 .g-qr .hint{color:var(--soft)}
@@ -1466,12 +1468,12 @@ const REGISTER_QR="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAhwAAAJ2BAMAAAD
 function reportUrl(t){return CONFIG.reportsUrl+"?tour="+encodeURIComponent(t.ref||t.title||"")+"#report"}
 function concernCard(t){
   const url=reportUrl(t);
-  return el("div",{class:"g-qr"},el("img",{class:"code",src:REGISTER_QR,width:"540",height:"630",alt:"QR code: Experiences Caribbean Incident & Feedback Register"}),
+  return el("div",{class:"g-qr"},el("a",{class:"codelink",href:url,target:"_blank",rel:"noopener",title:"Open the Incident & Feedback Register"},el("img",{class:"code",src:REGISTER_QR,width:"540",height:"630",alt:"QR code: open the Experiences Caribbean Incident & Feedback Register"})),
     el("div",{},el("h3",{text:"Problem, concern or compliment?"}),
-      el("p",{text:"Scan the code or tap the button to tell us about anything on your trip: a complaint, an accident or near miss, a worry about wildlife, a supplier or someone's safety, or something we did well. Every report gets a reference number and a named person who follows it up. You can report anonymously."}),
+      el("p",{text:"Scan or tap the code, or tap the button, to tell us about anything on your trip: a complaint, an accident or near miss, a worry about wildlife, a supplier or someone's safety, or something we did well. Every report gets a reference number and a named person who follows it up. You can report anonymously."}),
       el("p",{class:"hint",text:"Life-threatening emergency? Call "+CONFIG.emergencyServices+" first, then call us."}),
       el("a",{class:"btn small",href:url,target:"_blank",rel:"noopener"},icon("flag"),"Report a problem or concern"),
-      el("p",{class:"url",text:"reports.experiencescaribbean.com"})));
+      el("p",{class:"url"},el("a",{href:url,target:"_blank",rel:"noopener",style:"color:inherit"},"reports.experiencescaribbean.com"))));
 }
 
 function libEditor(l,row){
