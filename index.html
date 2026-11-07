@@ -9,7 +9,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rosario:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@500;700&family=Montserrat:wght@500;600;700;900&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>/* Arriving with a sign-in hand-over (from TourOps or the register): show a short "opening" screen
+   instead of flashing the sign-in page. */
+if(/^#(?:tourops=[^&]*&)?sso=/.test(location.hash)){document.documentElement.classList.add("handoff");setTimeout(function(){document.documentElement.classList.remove("handoff")},10000)}</script>
 <style>
+html.handoff body>*{display:none!important}
+html.handoff body{min-height:100vh;display:grid;place-items:center;background:#F4F0DB}
+html.handoff body::before{content:"Opening Guest itineraries\2026";font:600 18px/1.4 system-ui,sans-serif;color:#3A3530;padding:20px 28px;border-radius:12px;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.08)}
+
 :root{
   --bg:#f4f0db; --surface:#fff; --sunk:#ece7cd; --ink:#333; --head:#3a3530; --muted:#6b645c; --line:#dcd5b6;
   --header:linear-gradient(10deg,#2b2b2b 0%,#04869d 100%); --header-solid:#2b2b2b; --band:#e4eab1;
@@ -859,7 +866,7 @@ function captureTourOpsHash(){
   const h=location.hash.slice(1); if(!/^(tourops|sso)=/.test(h))return;
   const prm=new URLSearchParams(h), payload=prm.get("tourops"), sso=prm.get("sso");
   if(payload&&/^[A-Za-z0-9_\-]+$/.test(payload)){try{const p=decodePayload(payload);sessionStorage.setItem("ec_tourops",JSON.stringify(p))}catch(_){toast("That TourOps link couldn't be read.")}}
-  const m=sso&&sso.match(/^(tourops|reports)\.([A-Za-z0-9_\-]{32,128})$/); if(m)ssoTicket={from:m[1],code:m[2]};
+  const m=sso&&sso.match(/^(tourops|reports)\.([A-Za-z0-9_\-]{32,128})$/); if(m)ssoTicket={from:m[1],code:m[2]}; if(!ssoTicket)document.documentElement.classList.remove("handoff");
   history.replaceState(null,"",location.pathname+location.search+"#list");
 }
 async function ssoSignIn(t){
@@ -867,7 +874,7 @@ async function ssoSignIn(t){
     $("#siMsg").textContent="Signing you in from the incident register…"; $("#signinForm").hidden=true;
     const r=await sb.auth.verifyOtp({type:"magiclink",token_hash:t.code});
     if(!r.error)return true;
-    $("#signinForm").hidden=false; $("#siMsg").textContent="That link has expired. Use the Guest itineraries link in the register again, or sign in below."; return false;
+    $("#signinForm").hidden=false; $("#siMsg").textContent="That link has expired. Use the Guest itineraries link in the register again, or sign in below."; document.documentElement.classList.remove("handoff"); return false;
   }
   const where="TourOps";
   $("#siMsg").textContent="Signing you in from "+where+"…"; $("#signinForm").hidden=true;
@@ -878,6 +885,7 @@ async function ssoSignIn(t){
     else{const r=await sb.auth.verifyOtp({type:"magiclink",token_hash:data.token_hash}); if(r.error)msg=errText(r.error); else return true}
   }catch(e){msg=errText(e)}
   $("#signinForm").hidden=false; $("#siMsg").textContent=(msg||"Couldn't sign you in automatically.")+" You can also sign in with your work email below.";
+  document.documentElement.classList.remove("handoff");
   return false;
 }
 // An example of what TourOps sends, for trying the import in the demo.
@@ -1722,10 +1730,11 @@ async function handleSession(session){
   if(!session){staff=null;sessionFor=null;trips=[];applyMode();show("signin");return}
   if(staff&&sessionFor===session.user.id)return; // hourly token refresh: same person, stay where you are (keeps unsaved edits)
   const {data,error}=await sb.from("staff").select("full_name,roles,active").eq("user_id",session.user.id).maybeSingle();
-  if(error||!data||!data.active){staff=null;applyMode();show("signin");$("#siMsg").textContent="You're signed in as "+session.user.email+", but that email isn't on the active team list.";$("#signoutBtn").hidden=false;return}
-  if(!(data.roles||[]).includes("itineraries")){staff=null;applyMode();show("signin");$("#signinForm").hidden=true;$("#codeForm").hidden=true;
+  if(error||!data||!data.active){staff=null;applyMode();show("signin");document.documentElement.classList.remove("handoff");$("#siMsg").textContent="You're signed in as "+session.user.email+", but that email isn't on the active team list.";$("#signoutBtn").hidden=false;return}
+  if(!(data.roles||[]).includes("itineraries")){staff=null;applyMode();show("signin");document.documentElement.classList.remove("handoff");$("#signinForm").hidden=true;$("#codeForm").hidden=true;
     $("#siMsg").textContent="You're signed in as "+session.user.email+", but you don't have the Itineraries tick yet. Ask an admin to tick Itineraries for you on the Team page of the incident register (reports.experiencescaribbean.com), then reload this page.";$("#signoutBtn").hidden=false;return}
   staff=data; sessionFor=session.user.id; if(!demo)setItinFlag(true); applyMode(); loadWebCat(); await Promise.all([loadTrips(),loadLibrary()]);
+  document.documentElement.classList.remove("handoff");
   const pend=pendingTourOps(); if(pend){startFromTourOps(pend);return}
   const h=location.hash.slice(1); show(h==="library"?"library":"list");
 }
