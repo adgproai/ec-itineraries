@@ -806,7 +806,7 @@ function fromTourOps(p){
   t.title=b.category&&!/^(day|same day|cruise)/i.test(b.category)?b.category:(tours.length===1?tours[0]:"Your Dominica holiday");
   t.data.guests=+b.party_size||names.length||2;
   t.data.guestEmail=b.email||""; t.data.guestPhone=b.phone||"";
-  t.data.tourops={id:b.id||"",number:b.number||"",source:b.source||"",notes:b.notes||"",importedAt:new Date().toISOString()};
+  t.data.tourops={from:p.source==="website"?"website":"tourops",id:b.id||"",number:b.number||"",source:b.source||"",notes:b.notes||"",importedAt:new Date().toISOString()};
   normaliseDays(t);
   const missing=[];
   ex.forEach(e=>{
@@ -829,7 +829,7 @@ function fromTourOps(p){
 function startFromTourOps(p){
   let r; try{r=fromTourOps(p)}catch(e){toast("That TourOps booking couldn't be read.");return}
   cur=r.trip; dirty=true; openId=null; show("edit"); setSaved("Not saved yet",true);
-  toast("Imported "+r.count+" excursion"+(r.count===1?"":"s")+" from TourOps"+(r.missing.length?". "+r.missing.length+" not in the library yet.":"."));
+  toast("Imported "+r.count+" excursion"+(r.count===1?"":"s")+(p.source==="website"?" from website order":" from TourOps")+(r.missing.length?". "+r.missing.length+" not in the library yet.":"."));
 }
 function pendingTourOps(){
   try{const s=sessionStorage.getItem("ec_tourops");if(!s)return null;sessionStorage.removeItem("ec_tourops");return JSON.parse(s)}catch(_){return null}
@@ -911,7 +911,7 @@ function checklistCard(t){
   items.forEach(x=>ul.append(el("li",{class:x.done?"done":""},el("span",{class:"ckmark","aria-hidden":"true"},x.done?"✓":"!"),el("span",{class:"cklabel",text:x.label}),
     !x.done&&x.fix?el("button",{type:"button",class:"btn ghost small",onclick:x.fix},/^No hotel/.test(x.label)?"Add hotel":/Arrival|Departure/.test(x.label)?"Add":"Show"):null)));
   card.append(ul);
-  if(t.data.tourops&&t.data.tourops.number)card.append(el("p",{class:"hint",style:"margin:0",text:"Imported from TourOps booking "+t.data.tourops.number+(t.data.tourops.source?" ("+t.data.tourops.source+")":"")+"."+(t.data.tourops.notes?" Notes: "+t.data.tourops.notes:"")}));
+  if(t.data.tourops&&t.data.tourops.number)card.append(el("p",{class:"hint",style:"margin:0",text:(t.data.tourops.from==="website"?"Imported from website order ":"Imported from TourOps booking ")+t.data.tourops.number+(t.data.tourops.source?" ("+t.data.tourops.source+")":"")+"."+(t.data.tourops.notes?" Notes: "+t.data.tourops.notes:"")}));
   return card;
 }
 
