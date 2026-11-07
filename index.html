@@ -320,6 +320,7 @@ details.itm[open] > summary .chev{transform:rotate(180deg)}
 .gv-dl dt{font:700 11px/2.1 "Montserrat",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
 .gv-dl dd{margin:0}
 .gv-text{margin:0;white-space:pre-line}
+.gv-credit{margin:4px 0 0;font-size:11px;opacity:.7}.gv-credit a{color:inherit}
 
 /* photo slider */
 .gv-slider{position:relative;border-radius:12px;overflow:hidden;background:#eee}
@@ -952,10 +953,11 @@ function loadHotelPics(title){
 function loadSourcesFor(it){return Promise.all([loadWebCat(),it&&it.type==="stay"?loadHotelPics(it.title):null])}
 const LIBKIND={stay:"stay",activity:"activity",transfer:"transfer"};
 function photoSources(it){
-  const out=[]; if(!it.title||!LIBKIND[it.type])return out;
+  const out=[]; if(!LIBKIND[it.type])return out;
   const lib=matchLibrary(it.title,LIBKIND[it.type]); if(lib)out.push(...((lib.content&&lib.content.images)||[]));
   if(it.type==="activity"){const w=matchWeb(it.title);if(w)out.push(...(w.images||[]))}
   if(it.type==="stay")out.push(...(HOTEL_PICS.get(hotelKey(it.title))||[]));
+  if(isAirportTransfer(it))out.push(AIRPORT_IMG);
   return [...new Set(out.filter(x=>safeImg(x)&&(!demo||!/^https?:/.test(x))))]; // the demo can't show remote photos
 }
 // Fill an item that has no photos from its library entry or website page (and its text, if empty).
@@ -1484,7 +1486,12 @@ function libEditor(l,row){
 }
 // ---------- guest view (layout modelled on the client's Safari Portal sample) ----------
 let guestIO=null;
-function imgsOf(it){const a=(it.images||[]).slice();if(it.image&&!a.includes(it.image))a.unshift(it.image);return a.map(safeImg).filter(Boolean)}
+// Douglas-Charles Airport photo for airport transfers that have no photos of their own.
+// "American Eagle - Gate 1" by DOMDCF, Wikimedia Commons, CC BY-SA 4.0 (credit shown under it).
+const AIRPORT_IMG="https://trips.experiencescaribbean.com/img/douglas-charles-airport.jpg";
+const AIRPORT_CREDIT={text:"Photo: DOMDCF / Wikimedia Commons, CC BY-SA 4.0",href:"https://commons.wikimedia.org/wiki/File:American_Eagle_-_Gate_1.jpg"};
+const isAirportTransfer=it=>it&&it.type==="transfer"&&/douglas|melville|\bdom\b|airport/i.test([it.from,it.to,it.title,it.pickup,it.dropoff].join(" "))&&!/canefield/i.test([it.from,it.to,it.title].join(" "));
+function imgsOf(it){const a=(it.images||[]).slice();if(it.image&&!a.includes(it.image))a.unshift(it.image);const r=a.map(safeImg).filter(Boolean);if(!r.length&&isAirportTransfer(it))r.push(AIRPORT_IMG);return r}
 function dayImage(t,i){const d=t.data.days[i];if(safeImg(d.image))return d.image;for(const it of d.items){const a=imgsOf(it);if(a.length)return a[0]}return safeImg(CONFIG.images.brief)||""}
 function logoLink(cls){return el("a",{href:CONFIG.website,class:"logolink",title:"Go to experiencescaribbean.com","aria-label":"Experiences Caribbean website"},logoImg(cls))}
 function logoImg(cls){
@@ -1547,7 +1554,7 @@ function eventBlock(it){
   if(type==="flight")add("Booking ref",it.confirmation);
   if(dl.childNodes.length)b.append(dl);
   if(it.details)b.append(el("p",{class:"gv-text",text:it.details}));
-  const sl=slider(imgsOf(it),it.title); if(sl)b.append(sl);
+  const ims=imgsOf(it), sl=slider(ims,it.title); if(sl){b.append(sl);if(ims.includes(AIRPORT_IMG))b.append(el("p",{class:"gv-credit"},el("a",{href:AIRPORT_CREDIT.href,target:"_blank",rel:"noopener"},AIRPORT_CREDIT.text)))}
   // more details: headline, description, highlights, includes / what to bring, fast facts
   const mb=el("div",{class:"mb"});
   if(it.headline)mb.append(el("h4",{text:it.headline}));
@@ -1653,7 +1660,7 @@ function renderGuest(t,root,opts={}){
       day.title?el("div",{class:"tt",text:day.title}):null));
     const evs=el("div",{class:"gv-evs"});
     auto[i].checkout.forEach(s=>evs.append(autoEvent("checkout","Check out from "+s.title)));
-    day.items.forEach(it=>{const n=eventBlock(it);evs.append(n);const im=imgsOf(it)[0];if(im)subs.push({id:"gv-day"+i,label:"Day "+(i+1),sub:it.title||"",img:im,node:n})});
+    day.items.forEach(it=>{const n=eventBlock(it);evs.append(n);const im=imgsOf(it)[0];if(im)subs.push({id:"gv-day"+i,label:"Day "+(i+1),sub:itemTitle(it)||"",img:im,node:n})});
     auto[i].overnight.forEach(s=>evs.append(autoEvent("overnight","Overnight at "+s.title,[s.room,s.meal?"("+s.meal+")":""].filter(Boolean).join(" "))));
     if(!evs.childNodes.length)evs.append(autoEvent("star","A free day to explore at your own pace","Ask us for ideas."));
     sec.append(evs);
@@ -1689,7 +1696,7 @@ function renderGuest(t,root,opts={}){
   const layers=[el("img",{alt:""}),el("img",{alt:""})], cap=el("div",{class:"cap"}); let front=0, shown="";
   left.append(...layers,cap);
   let ltok=0;
-  const setLeft=s=>{const src=s.img||"";cap.textContent=s.label+(s.sub?" · "+s.sub:"");if(src===shown)return;shown=src;const tok=++ltok;
+  const setLeft=s=>{const src=s.img||"";cap.textContent=s.label+(s.sub?" · "+s.sub:"")+(src===AIRPORT_IMG?" · "+AIRPORT_CREDIT.text:"");if(src===shown)return;shown=src;const tok=++ltok;
     if(!src){layers.forEach(l=>l.classList.remove("on"));return}
     const back=layers[1-front];
     const done=()=>{if(tok!==ltok)return;back.classList.add("on");layers[front].classList.remove("on");front=1-front};
