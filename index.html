@@ -1486,10 +1486,9 @@ function libEditor(l,row){
 }
 // ---------- guest view (layout modelled on the client's Safari Portal sample) ----------
 let guestIO=null;
-// Douglas-Charles Airport photo for airport transfers that have no photos of their own.
-// "American Eagle - Gate 1" by DOMDCF, Wikimedia Commons, CC BY-SA 4.0 (credit shown under it).
-const AIRPORT_IMG="https://trips.experiencescaribbean.com/img/douglas-charles-airport.jpg";
-const AIRPORT_CREDIT={text:"Photo: DOMDCF / Wikimedia Commons, CC BY-SA 4.0",href:"https://commons.wikimedia.org/wiki/File:American_Eagle_-_Gate_1.jpg"};
+// Douglas-Charles Airport photo (Experiences Caribbean's own) for airport transfers that have no photos of their own.
+const AIRPORT_IMG="https://trips.experiencescaribbean.com/img/douglas-charles-airport.jpg?v=2";
+const AIRPORT_CREDIT=null;
 const isAirportTransfer=it=>it&&it.type==="transfer"&&/douglas|melville|\bdom\b|airport/i.test([it.from,it.to,it.title,it.pickup,it.dropoff].join(" "))&&!/canefield/i.test([it.from,it.to,it.title].join(" "));
 function imgsOf(it){const a=(it.images||[]).slice();if(it.image&&!a.includes(it.image))a.unshift(it.image);const r=a.map(safeImg).filter(Boolean);if(!r.length&&isAirportTransfer(it))r.push(AIRPORT_IMG);return r}
 function dayImage(t,i){const d=t.data.days[i];if(safeImg(d.image))return d.image;for(const it of d.items){const a=imgsOf(it);if(a.length)return a[0]}return safeImg(CONFIG.images.brief)||""}
@@ -1554,7 +1553,7 @@ function eventBlock(it){
   if(type==="flight")add("Booking ref",it.confirmation);
   if(dl.childNodes.length)b.append(dl);
   if(it.details)b.append(el("p",{class:"gv-text",text:it.details}));
-  const ims=imgsOf(it), sl=slider(ims,it.title); if(sl){b.append(sl);if(ims.includes(AIRPORT_IMG))b.append(el("p",{class:"gv-credit"},el("a",{href:AIRPORT_CREDIT.href,target:"_blank",rel:"noopener"},AIRPORT_CREDIT.text)))}
+  const ims=imgsOf(it), sl=slider(ims,it.title); if(sl){b.append(sl);if(AIRPORT_CREDIT&&ims.includes(AIRPORT_IMG))b.append(el("p",{class:"gv-credit"},el("a",{href:AIRPORT_CREDIT.href,target:"_blank",rel:"noopener"},AIRPORT_CREDIT.text)))}
   // more details: headline, description, highlights, includes / what to bring, fast facts
   const mb=el("div",{class:"mb"});
   if(it.headline)mb.append(el("h4",{text:it.headline}));
@@ -1696,7 +1695,7 @@ function renderGuest(t,root,opts={}){
   const layers=[el("img",{alt:""}),el("img",{alt:""})], cap=el("div",{class:"cap"}); let front=0, shown="";
   left.append(...layers,cap);
   let ltok=0;
-  const setLeft=s=>{const src=s.img||"";cap.textContent=s.label+(s.sub?" · "+s.sub:"")+(src===AIRPORT_IMG?" · "+AIRPORT_CREDIT.text:"");if(src===shown)return;shown=src;const tok=++ltok;
+  const setLeft=s=>{const src=s.img||"";cap.textContent=s.label+(s.sub?" · "+s.sub:"")+(AIRPORT_CREDIT&&src===AIRPORT_IMG?" · "+AIRPORT_CREDIT.text:"");if(src===shown)return;shown=src;const tok=++ltok;
     if(!src){layers.forEach(l=>l.classList.remove("on"));return}
     const back=layers[1-front];
     const done=()=>{if(tok!==ltok)return;back.classList.add("on");layers[front].classList.remove("on");front=1-front};
