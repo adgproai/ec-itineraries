@@ -265,6 +265,13 @@ details.itm[open] > summary .chev{transform:rotate(180deg)}
 @media (max-width:560px){.gv-table td.dcell{width:72px}.gv-table td{padding:12px 6px}}
 
 /* map */
+.gv-gmapwrap{position:relative;width:100%;aspect-ratio:4/3;max-height:460px;border-radius:12px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.12);background:#e9e5dc}
+.gv-gmap{position:absolute;inset:0;width:100%;height:100%;border:0}
+.gv-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.gv-chips button{font:inherit;font-size:13px;border:1px solid #d9d1c4;background:#fff;border-radius:999px;padding:5px 11px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.gv-chips button[aria-pressed=true]{background:#2b2723;color:#fff;border-color:#2b2723}
+.gv-chipday{font-size:11px;opacity:.7}
+@media print{.gv-gmapwrap,.gv-chips{display:none}}
 .gv-mapart{display:block;width:100%;border-radius:12px;box-shadow:0 2px 14px rgba(0,0,0,.12)}
 .gv-keys{margin:0;padding-left:22px}
 .gv-keys li{margin-bottom:6px}
@@ -606,7 +613,7 @@ const FIELDS = {
   flight:[["title","Flight","text",{ph:"e.g. Arrival flight AA 1234"}],["from","From","text",{ph:"e.g. San Juan (SJU)"}],["to","To","text",{ph:"e.g. Dominica (DOM)"}],["time","Departs","time"],["arrive","Arrives","time"],["confirmation","Booking reference","text"],["details","Notes for the guest","textarea",{full:1}]],
   stay:[["title","Hotel or lodge","text"],["place","Area","text",{ph:"e.g. Roseau"}],["nights","Nights","number"],["room","Room type","text"],["meal","Meal plan","text",{ph:"e.g. Breakfast included"}],["confirmation","Confirmation number","text"],["mapq","Map search","text",{ph:"Name and town for Google Maps"}],
     ["details","Notes for the guest","textarea",{full:1,ph:"Check-in time, luggage, what to expect on arrival"}],["images","Photos","gallery"],["headline","Headline","text",{full:1,more:1,ph:"e.g. A remote rainforest lodge reached by river"}],["about","About the property","textarea",{full:1,more:1}],["highlights","Highlights","lines",{full:1,more:1,ph:"One per line"}],["sustain","Sustainability","textarea",{more:1}]],
-  activity:[["title","Activity","text"],["time","Starts","time"],["duration","Duration","text",{ph:"e.g. 4 hours"}],["pickup","Pick-up","text",{ph:"e.g. Hotel lobby at 8:30 am"}],["dropoff","Drop-off","text"],["supplier","Guide or operator","text"],
+  activity:[["title","Activity","text"],["mapq","Map search","text",{more:1,ph:"Place for Google Maps, e.g. Trafalgar Falls, Dominica"}],["time","Starts","time"],["duration","Duration","text",{ph:"e.g. 4 hours"}],["pickup","Pick-up","text",{ph:"e.g. Hotel lobby at 8:30 am"}],["dropoff","Drop-off","text"],["supplier","Guide or operator","text"],
     ["details","Notes for the guest","textarea",{full:1}],["images","Photos","gallery"],["headline","Headline","text",{full:1,more:1,ph:"e.g. Swim in a 65 m waterfall"}],["about","About this activity","textarea",{full:1,more:1}],["includes","Includes","lines",{more:1,ph:"One per line"}],["bring","What to bring","lines",{more:1,ph:"One per line"}],["sustain","Sustainability","textarea",{more:1}]],
   meal:[["title","Restaurant or meal","text"],["time","Time","time"],["place","Where","text"],["details","Notes for the guest","textarea",{full:1}]],
   note:[["title","Heading","text"],["details","Text","textarea",{full:1}]]
@@ -799,10 +806,16 @@ function decodePayload(s){
 }
 const isTransfer=name=>/\b(transfer|airport|pick ?up|drop ?off|shuttle)\b/i.test(name||"");
 function fromTourOps(p){
-  const b=p.booking||{}, ex=(p.excursions||[]).filter(e=>/^\d{4}-\d{2}-\d{2}$/.test(e.date||"")).sort((a,c)=>(a.date+(a.time||"")).localeCompare(c.date+(c.time||"")));
+  const b=p.booking||{}, isD=x=>/^\d{4}-\d{2}-\d{2}$/.test(x||""), bd=isD(b.booking_date)?b.booking_date:"";
+  // The booking date is Day 1. Excursions without a date go on the booking date; a booking with no
+  // scheduled excursions yet still gets its booked tour on Day 1.
+  let ex=(p.excursions||[]).map(e=>Object.assign({},e,{date:isD(e.date)?e.date:bd})).filter(e=>isD(e.date));
+  if(!ex.length&&b.tour&&bd)ex=[{date:bd,time:"",tour:b.tour,activities:b.tour_activities||[],transport:true}];
+  ex.sort((a,c)=>(a.date+(a.time||"")).localeCompare(c.date+(c.time||"")));
   const t=blankTrip();
-  const dates=ex.map(e=>e.date).concat(/^\d{4}-\d{2}-\d{2}$/.test(b.booking_date||"")?[b.booking_date]:[]).sort();
-  t.start=dates[0]||""; t.end=dates[dates.length-1]||t.start;
+  const dates=ex.map(e=>e.date).sort();
+  t.start=bd&&!(dates[0]&&dates[0]<bd)?bd:(dates[0]||bd); // Day 1 = booking date, unless an excursion is earlier
+  t.end=[t.start].concat(dates).sort().pop()||t.start;
   const names=(b.guests||[]).map(g=>g.name).filter(Boolean);
   t.guest=b.guest_name||(names.length&&names.length<=3?names.join(" & "):names[0]||"");
   t.ref=b.number||"";
@@ -1198,7 +1211,15 @@ function renderDays(){
     if(!t.start&&t.data.days.length>1){head.append(armed(el("button",{type:"button",class:"btn danger small"},"Remove day"),"Tap again",()=>{if(d.items.length){toast("Move or delete this day's items first.");return}t.data.days.splice(i,1);markDirty();renderDays()}))}
     box.append(el("div",{class:"day",id:"eday"+i},head,body));
   });
-  if(!t.start)box.append(el("div",{},el("button",{type:"button",class:"btn ghost small",onclick:()=>{t.data.days.push({title:"",items:[]});markDirty();renderDays()}},"+ Add a day")));
+  const addEnd=()=>{if(t.start){t.end=addDays(t.end||t.start,1);normaliseDays(t);markDirty();renderEditor()}else{t.data.days.push({title:"",items:[]});markDirty();renderDays()}
+    const n=t.data.days.length-1;setTimeout(()=>{const e=$("#eday"+n);e&&e.scrollIntoView({block:"start"})},0);toast("Day "+(n+1)+" added"+(t.start?" ("+fmtShort(addDays(t.start,n))+")":"")+".")};
+  const addStart=()=>{t.start=addDays(t.start,-1);t.data.days.unshift({title:"",items:[]});markDirty();renderEditor();toast("Added a day before: the trip now starts "+fmtShort(t.start)+".")};
+  const last=t.data.days[t.data.days.length-1];
+  box.append(el("div",{class:"row",style:"gap:8px;flex-wrap:wrap"},
+    el("button",{type:"button",class:"btn small",onclick:addEnd},"+ Add a day at the end"),
+    t.start?el("button",{type:"button",class:"btn ghost small",onclick:addStart},"+ Add a day before Day 1"):null,
+    t.start&&t.data.days.length>1?armed(el("button",{type:"button",class:"btn ghost small"},"Remove last day"),"Tap again to remove Day "+t.data.days.length,()=>{if(last.items.length){toast("Move or delete the last day's items first.");return}t.data.days.pop();t.end=addDays(t.start,t.data.days.length-1);markDirty();renderEditor()}):null,
+    el("span",{class:"hint",text:t.start?"Or change the departure date at the top.":""})));
   refreshAuto();
 }
 // check-out and overnight lines, refreshed as staff type (without rebuilding the open forms)
@@ -1382,7 +1403,10 @@ function logoImg(cls){
   i.addEventListener("error",()=>{const s=el("span",{class:cls,style:"display:grid;place-items:center;background:#e48725"});s.append(logoMark());i.replaceWith(s)});
   return i;
 }
-const mapsUrl=it=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(it.mapq||it.title+", Dominica");
+const mapQ=it=>(it.mapq||(it.title+(it.place?", "+it.place:"")+", Dominica")).trim();
+const mapsUrl=it=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(mapQ(it));
+const gEmbed=(q,z)=>"https://maps.google.com/maps?q="+encodeURIComponent(q)+"&z="+(z||12)+"&output=embed";
+const gRoute=qs=>"https://www.google.com/maps/dir/"+qs.slice(0,10).map(encodeURIComponent).join("/");
 const telLink=n=>el("a",{href:"tel:+"+digits(n)},el("b",{text:n}));
 const EVICON={transfer:"transfer",flight:"flight",stay:"stay",activity:"activity",meal:"meal",note:"note"};
 const KIND={transfer:"Private transfer",flight:"Flight",stay:"Accommodation",activity:"Activity",meal:"Dining",note:"Good to know"};
@@ -1512,10 +1536,19 @@ function renderGuest(t,root,opts={}){
   tb.append(tabs,...pans);
 
   // map and key dates
-  if(sts.length||IM.mapArt){
+  {
     const mp=S("gv-map","Map","",IM.mapLeft);
     mp.append(H("Map"));
-    if(safeImg(IM.mapArt))mp.append(el("img",{class:"gv-mapart",src:IM.mapArt,alt:"Illustrated map of Dominica",loading:"lazy"}));
+    // Google Map: every hotel and activity in day order; tap a place to zoom in.
+    const places=[], seen=new Set();
+    d.days.forEach((day,i)=>(day.items||[]).forEach(it=>{if(!["stay","activity","meal"].includes(it.type)||!it.title)return;const q=mapQ(it);if(seen.has(q))return;seen.add(q);places.push({label:it.title,q,day:i,type:it.type})}));
+    const frame=el("iframe",{class:"gv-gmap",title:"Google Map of your trip",loading:"lazy",referrerpolicy:"no-referrer-when-downgrade",allowfullscreen:true,src:gEmbed("Dominica",10)});
+    const chips=el("div",{class:"gv-chips"});
+    const pick=(b,q,z)=>{chips.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));frame.src=gEmbed(q,z)};
+    const all=el("button",{type:"button","aria-pressed":"true"},"All of Dominica"); all.onclick=()=>pick(all,"Dominica",10); chips.append(all);
+    places.forEach(pl=>{const b=el("button",{type:"button","aria-pressed":"false"},el("span",{class:"gv-chipday",text:"Day "+(pl.day+1)}),pl.label);b.onclick=()=>pick(b,pl.q,14);chips.append(b)});
+    mp.append(el("div",{class:"gv-gmapwrap"},frame),chips);
+    if(places.length>1)mp.append(el("p",{style:"margin:8px 0 0"},el("a",{href:gRoute(places.map(x=>x.q)),target:"_blank",rel:"noopener"},"Open the whole trip in Google Maps")));
     if(sts.length)mp.append(el("h3",{class:"gv-sub",text:"Key dates"}),el("ol",{class:"gv-keys"},sts.map(s=>el("li",{},s.from?el("b",{text:fmtMD(s.from)+" – "+fmtMD(s.to)+": "}):null,s.it.title+(s.it.place?", "+s.it.place:"")+" ",el("a",{href:mapsUrl(s.it),target:"_blank",rel:"noopener"},"map")))));
   }
 
