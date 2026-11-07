@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2b2b2b">
+<title>Guest Itineraries · Experiences Caribbean</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rosario:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@500;700&family=Montserrat:wght@500;600;700;900&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#f4f0db; --surface:#fff; --sunk:#ece7cd; --ink:#333; --head:#3a3530; --muted:#6b645c; --line:#dcd5b6;
+  --header:linear-gradient(10deg,#2b2b2b 0%,#04869d 100%); --header-solid:#2b2b2b; --band:#e4eab1;
+  --orange:#ff8000; --orange-ink:#b35a00; --teal:#04869d; --teal-soft:#dcf0f3; --green:#2e6b26; --green-soft:#e2edd9;
+  --btn:#000; --crit:#b42318; --crit-soft:#fbe4e1;
+  --f:"Rosario","Segoe UI",system-ui,sans-serif; --f-btn:"Roboto","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--f)}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px}
+h1,h2,h3,h4{font-family:var(--f);color:var(--head);margin:0;letter-spacing:-.01em;text-wrap:balance}
+a{color:var(--teal)}
+button,input,select,textarea{font:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.btn{font:500 14.5px var(--f-btn);background:var(--btn);color:#fff;border:0;border-radius:3px;padding:10px 18px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;min-height:42px}
+.btn:hover{background:var(--teal)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+.btn.ghost:hover{background:var(--sunk)}
+.btn.small{padding:6px 12px;font-size:13px;min-height:34px}
+.btn.orange{background:var(--orange);color:#1d1100}
+.btn.orange:hover{background:#e67300}
+.btn.danger{background:transparent;color:var(--crit);border:1px solid var(--crit)}
+.btn.danger.armed{background:var(--crit);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn svg{width:18px;height:18px;flex:none}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hint{font-size:12.5px;color:var(--muted);font-weight:400}
+.pill{display:inline-flex;align-items:center;font:700 11.5px var(--f);letter-spacing:.03em;padding:2px 9px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill.pub{background:var(--green-soft);color:var(--green)}
+.pill.tpl{background:var(--teal-soft);color:#035e6e}
+.pill.ex{background:none;border:1px dashed var(--muted)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-weight:700;z-index:50;max-width:calc(100% - 32px)}
+
+/* ---------- staff chrome ---------- */
+header.top{background:var(--header-solid);background-image:var(--header);color:#fff;border-bottom:6px solid var(--band);position:sticky;top:0;z-index:20}
+.bar{display:flex;align-items:center;gap:12px 20px;padding-block:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;min-width:0}
+.brand .logo{width:42px;height:42px;display:grid;place-items:center;flex:none}
+.hdrlogo{width:42px;height:42px;border-radius:9px;display:block;object-fit:cover}
+.brand b{display:block;font:700 18px/1.1 var(--f)}
+.brand span{font-size:12px;color:rgba(255,255,255,.75)}
+nav.tabs{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+nav.tabs button{background:none;border:0;color:rgba(255,255,255,.8);font:600 14px var(--f);padding:7px 12px;cursor:pointer}
+nav.tabs button[aria-current="page"]{color:#fff;box-shadow:inset 0 -3px 0 var(--orange)}
+nav.tabs button:hover{color:#fff}
+.mode{font-size:12.5px;color:rgba(255,255,255,.8);border-top:1px dashed rgba(255,255,255,.25);padding-block:6px}
+.mode strong{color:#fff}
+.mode button{background:none;border:0;color:#fff;text-decoration:underline;cursor:pointer;padding:0 0 0 6px}
+main.staff{padding-block:24px 48px}
+.pagehead{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end;margin-bottom:16px}
+.pagehead h1{font-size:28px}
+.pagehead h1::after{content:"";display:block;width:56px;height:3px;background:var(--orange);margin-top:8px}
+.lede{color:var(--muted);margin:6px 0 0;max-width:64ch}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filters input,.filters select{flex:1 1 160px;width:auto}
+input[type=text],input[type=email],input[type=tel],input[type=url],input[type=date],input[type=time],input[type=number],select,textarea{font-size:15px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;min-height:40px}
+textarea{min-height:80px;resize:vertical;line-height:1.45}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label,.lbl{font-weight:700;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px 16px}
+.check{display:flex;gap:8px;align-items:center;font-size:14px}
+.check input{width:18px;height:18px;accent-color:var(--orange)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.card > h2{font-size:18px;margin-bottom:12px}
+.stack{display:flex;flex-direction:column;gap:14px}
+
+/* trip list */
+.trips{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.trip{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;padding:12px 14px;border-bottom:1px solid var(--line);align-items:center}
+.trip:last-child{border-bottom:0}
+.trip .t{font-weight:700;font-size:15.5px}
+.trip .m{font-size:13px;color:var(--muted)}
+.trip .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+@media (max-width:700px){.trip{grid-template-columns:minmax(0,1fr)}.trip .acts{justify-content:flex-start}}
+
+/* editor */
+.edhead{position:sticky;top:var(--hdr,72px);z-index:10;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--line);margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.edhead h1{font-size:20px;flex:1 1 220px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.saved{font-size:12.5px;color:var(--muted)}
+.saved.dirty{color:var(--orange-ink);font-weight:700}
+.edgrid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+@media (max-width:960px){.edgrid{grid-template-columns:minmax(0,1fr)}}
+.side{position:sticky;top:calc(var(--hdr,72px) + 70px);display:flex;flex-direction:column;gap:14px}
+@media (max-width:960px){.side{position:static;order:-1}}
+.sharelink{display:flex;gap:6px}
+.sharelink input{font-size:12.5px;font-family:ui-monospace,Menlo,monospace}
+.day{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.dayhead{display:flex;gap:10px;align-items:center;padding:10px 14px;background:var(--sunk);flex-wrap:wrap}
+.dayhead b{font:700 15px var(--f);white-space:nowrap}
+.dayhead input{flex:1 1 200px;width:auto;min-height:36px}
+.daybody{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.auto{font-size:13.5px;color:var(--muted);display:flex;gap:8px;align-items:center;padding:6px 10px;border:1px dashed var(--line);border-radius:6px}
+.auto svg{width:16px;height:16px}
+details.itm{border:1px solid var(--line);border-radius:8px;background:#fff}
+details.itm[open]{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal) inset}
+details.itm > summary{list-style:none;display:flex;gap:10px;align-items:center;padding:9px 12px;cursor:pointer}
+details.itm > summary::-webkit-details-marker{display:none}
+details.itm > summary .ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;color:#fff}
+details.itm > summary .ic svg{width:16px;height:16px}
+details.itm > summary .st{flex:1;min-width:0}
+details.itm > summary .st b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px}
+details.itm > summary .st span{font-size:12.5px;color:var(--muted)}
+details.itm > summary .chev{transition:transform .15s;color:var(--muted)}
+details.itm[open] > summary .chev{transform:rotate(180deg)}
+.itmbody{padding:4px 12px 12px;display:flex;flex-direction:column;gap:12px}
+.itmacts{display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px;align-items:center}
+.itmacts select{width:auto;min-height:34px;font-size:13px;padding:4px 8px}
+.addbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-top:4px}
+.addbar .btn{min-height:34px;padding:5px 10px;font-size:13px}
+.addbar select{width:auto;max-width:260px;min-height:34px;font-size:13px;padding:4px 8px}
+.imgfield{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.imgfield .thumb{width:96px;height:64px;border-radius:6px;object-fit:cover;border:1px solid var(--line);background:var(--sunk)}
+.imgfield input[type=url]{flex:1 1 200px;width:auto}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.t-transfer{background:#04869d}.t-flight{background:#3a3530}.t-stay{background:#2e6b26}.t-activity{background:#ff8000}.t-meal{background:#9a5b13}.t-note{background:#6b645c}
+.libitem{display:flex;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+.libitem:last-child{border-bottom:0}
+.libitem .ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none}
+.libitem .ic svg{width:16px;height:16px}
+.libitem .who{flex:1;min-width:0}
+.libitem .who span{display:block;font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.signin{max-width:440px}
+.previewbar{background:var(--orange);color:#1d1100;font-weight:700;padding:0;height:40px;overflow:hidden;position:sticky;top:0;z-index:30}
+.previewbar .wrap{display:flex;gap:10px;align-items:center;justify-content:space-between;height:40px}
+@media (max-width:560px){.previewbar{font-size:13px;padding:4px 0}.previewbar .btn{min-height:32px;padding:4px 10px;font-size:12.5px}}
+
+.wa{display:inline-flex;align-items:center;gap:6px;background:#25d366;color:#08301a!important;text-decoration:none;font-weight:700;border-radius:3px;padding:6px 12px;font-size:13.5px}
+.wa svg{width:16px;height:16px}
+.dlg{position:fixed;inset:0;background:rgba(20,20,30,.45);z-index:80;display:grid;place-items:center;padding:16px}
+.dlgbox{background:#fff;border-radius:12px;max-width:640px;width:100%;max-height:90vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.choice{border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.choice h3{font-size:16px}
+.choice p{margin:0}
+.choice select{width:auto;flex:1 1 200px}
+.cklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.cklist li{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:13.5px}
+.cklist .ckmark{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;background:#fcebd8;color:#b54708}
+.cklist li.done .ckmark{background:var(--green-soft);color:var(--green)}
+.cklist li.done .cklabel{color:var(--muted)}
+.cklist .btn{min-height:28px;padding:3px 10px;font-size:12px}
+.libedit{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;padding:10px 0 4px}
+.libitem{flex-wrap:wrap}
+/* ---------- guest itinerary (layout modelled on the client's Safari Portal sample) ----------
+   Desktop: photo panel on the left that changes with the section being read, content column on the right.
+   Phone: one column, each section opens with its photo. */
+.gv{--navy:#114077;--lime:#cacc2c;--orange:#e48725;--txt:#3f3c43;--soft:#8a8590;--rule:#ececec;--pv:0px;
+  background:#f8f8f8;color:var(--txt);font:16px/1.7 "Lora",Georgia,"Times New Roman",serif}
+.gv h1,.gv h2,.gv h3,.gv h4{color:var(--txt);margin:0;letter-spacing:0}
+.gv a{color:var(--navy)}
+.gv .sans{font-family:"Montserrat","Segoe UI",system-ui,sans-serif}
+.gv-left{position:relative;background:linear-gradient(160deg,#114077,#0b2a50 60%,#2a6b3a)}
+.gv-left img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .8s ease}
+.gv-left img.on{opacity:1}
+.gv-left .cap{position:absolute;left:24px;bottom:22px;right:24px;z-index:2;color:#fff;font:700 13px/1.3 "Montserrat",sans-serif;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 1px 8px rgba(0,0,0,.55)}
+.gv-left::after{content:"";position:absolute;inset:auto 0 0 0;height:30%;background:linear-gradient(180deg,transparent,rgba(0,0,0,.45));z-index:1;pointer-events:none}
+.gv-right{background:#fff;min-width:0;position:relative}
+@media (min-width:720px){
+  /* like the sample: the photo half stays still, the right half scrolls on its own */
+  .gv{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);height:calc(100vh - var(--pv));height:calc(100dvh - var(--pv));overflow:hidden}
+  .gv-left{height:100%}
+  .gv-right{height:100%;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#c9ccd6 transparent}
+  .gv-right::-webkit-scrollbar{width:8px}
+  .gv-right::-webkit-scrollbar-thumb{background:#c9ccd6;border-radius:8px}
+  .gv-right .gv-top{top:0}
+  .gv-right .gv-sec{scroll-margin-top:60px}
+  .gv-right .gv-ev{scroll-margin-top:70px}
+  .gv-cover{min-height:calc(100vh - 60px - var(--pv))}
+  .gv-banner{display:none}
+}
+@media (min-width:720px) and (prefers-reduced-motion:no-preference){.gv-right{scroll-behavior:smooth}}
+@media (max-width:719px){.gv-left{display:none}}
+
+/* top bar: menu, logo, share / PDF / call */
+.gv-top{position:sticky;top:var(--pv);z-index:30;height:60px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 12px;background:rgba(255,255,255,.97);border-bottom:1px solid var(--rule)}
+.gv-iconbtn{width:40px;height:40px;border-radius:50%;border:0;background:#f1f1f3;color:var(--txt);display:grid;place-items:center;cursor:pointer;text-decoration:none}
+.gv-iconbtn:hover{background:#e6e8ee;color:var(--navy)}
+.gv-iconbtn svg{width:18px;height:18px}
+.gv-acts{display:flex;gap:6px;justify-content:flex-end}
+.gv-logo{display:block;width:44px;height:44px;border-radius:10px;object-fit:cover;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+
+/* menu drawer */
+.gv-drawer{position:fixed;top:var(--pv,0px);left:0;bottom:0;width:min(340px,88vw);background:#fff;z-index:60;box-shadow:4px 0 30px rgba(0,0,0,.18);transform:translateX(-105%);transition:transform .28s ease;display:flex;flex-direction:column}
+.gv-drawer.open{transform:none}
+.gv-scrim{position:fixed;inset:0;background:rgba(20,20,30,.35);z-index:55;opacity:0;pointer-events:none;transition:opacity .25s}
+.gv-scrim.open{opacity:1;pointer-events:auto}
+.gv-drawer .dh{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--rule)}
+.gv-drawer .dh b{font:700 12px "Montserrat",sans-serif;letter-spacing:.16em;text-transform:uppercase}
+.gv-drawer nav{overflow-y:auto;padding:8px 0}
+.gv-drawer nav button{display:block;width:100%;text-align:left;border:0;background:none;padding:10px 22px;cursor:pointer;color:var(--txt);border-left:3px solid transparent}
+.gv-drawer nav button .l{display:block;font:600 14px/1.3 "Montserrat",sans-serif}
+.gv-drawer nav button .s{display:block;font-size:12.5px;color:var(--soft);font-style:italic}
+.gv-drawer nav button:hover{background:#f6f7f9}
+.gv-drawer nav button.on{border-left-color:var(--orange);background:#fbf6ef}
+
+/* content column */
+.gv-main{max-width:640px;margin:0 auto;padding:0 32px 30px}
+@media (max-width:560px){.gv-main{padding:0 20px 24px}}
+@media (min-width:720px) and (max-width:1100px){.gv-main{padding:0 22px 24px}.gv-banner{margin:-64px -22px 28px}.gv-evbody{padding-left:0}.gv-title{font-size:26px!important}.gv-acts{gap:4px}.gv-iconbtn{width:36px;height:36px}.g-qr{grid-template-columns:minmax(0,1fr);justify-items:start}.gv-table td.dcell{width:72px}.gv-table td{padding:12px 6px}}
+.gv-sec{padding:64px 0 34px;border-bottom:1px solid var(--rule);scroll-margin-top:calc(60px + var(--pv))}
+.gv-sec:last-child{border-bottom:0}
+.gv-banner{margin:-64px -32px 34px;position:relative}
+.gv-banner img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}
+@media (max-width:560px){.gv-banner{margin:-64px -20px 28px}}
+.gv-h{font:700 15px/1.35 "Montserrat",sans-serif;letter-spacing:.16em;text-transform:uppercase;text-align:center;margin:0 0 26px!important}
+.gv-h::after{content:"";display:block;width:36px;height:3px;background:var(--lime);margin:12px auto 0;border-radius:2px}
+.gv-sub{font:700 13px "Montserrat",sans-serif;letter-spacing:.12em;text-transform:uppercase;margin:26px 0 10px!important}
+.gv-prose p{margin:0 0 12px}
+.gv-center{text-align:center}
+
+/* cover */
+.gv-cover{min-height:calc(100vh - 60px - var(--pv));display:flex;flex-direction:column;justify-content:center;text-align:center;padding:40px 0}
+.gv-cover .gv-banner{display:none}
+@media (max-width:719px){.gv-cover{min-height:0;padding-top:0}.gv-cover .gv-banner{display:block;margin-top:0}.gv-cover .gv-banner img{aspect-ratio:4/3.4}}
+.gv-coverlogo{width:96px;height:96px;border-radius:20px;margin:0 auto 26px;display:block;box-shadow:0 4px 18px rgba(0,0,0,.12);object-fit:cover}
+.gv-title{font:900 clamp(28px,4.4vw,40px)/1.12 "Montserrat",sans-serif!important;text-transform:uppercase;letter-spacing:.02em!important}
+.gv-for{margin:16px 0 0;font-size:17px}
+.gv-dates{margin:2px 0 0;font-size:17px}
+.gv-intro{margin:26px auto 0;max-width:46ch;font-style:italic;color:#5b5660}
+.gv-down{margin:34px auto 0;width:46px;height:46px;border-radius:50%;border:1px solid #d9d9de;background:#fff;color:var(--txt);display:grid;place-items:center;cursor:pointer;animation:gvbob 2.4s ease-in-out infinite}
+.gv-down svg{width:20px;height:20px}
+@keyframes gvbob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+@media (prefers-reduced-motion:reduce){.gv-down{animation:none}.gv-left img{transition:none}}
+
+/* buttons */
+.gv-btnrow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+.gv-pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:9px 18px;background:var(--navy);color:#fff!important;text-decoration:none;font:600 13.5px "Montserrat",sans-serif;border:0;cursor:pointer}
+.gv-pill:hover{background:#0b2d55}
+.gv-pill.ghost{background:#fff;color:var(--navy)!important;border:1px solid var(--navy)}
+.gv-pill.wa{background:#25d366;color:#08301a!important}
+.gv-pill svg{width:16px;height:16px}
+
+/* travel brief: tabs + tables */
+.gv-tabs{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:22px 0 14px}
+.gv-tabs button{border:1px solid #dcdce2;background:#fff;border-radius:999px;padding:7px 16px;font:600 13px "Montserrat",sans-serif;color:var(--txt);cursor:pointer}
+.gv-tabs button[aria-selected="true"]{background:var(--txt);border-color:var(--txt);color:#fff}
+.gv-table{width:100%;border-collapse:collapse;font-size:15px}
+.gv-table th{font:700 11.5px "Montserrat",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);text-align:left;padding:8px 10px;border-bottom:2px solid var(--txt)}
+.gv-table td{padding:14px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+.gv-table td.dcell{width:96px}
+.gv-table td.dcell b{display:block;font:700 14px "Montserrat",sans-serif}
+.gv-table td.dcell span{display:block;font-size:13.5px;color:var(--soft)}
+.gv-acts-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.gv-acts-list li{display:grid;grid-template-columns:20px minmax(0,1fr);gap:8px;align-items:start}
+.gv-acts-list li svg{width:17px;height:17px;margin-top:4px;color:var(--navy)}
+.gv-acts-list li.au{color:var(--soft)}
+.gv-acts-list li.au svg{color:var(--soft)}
+.gv-acts-list .tm{font-weight:700}
+.gv-link{background:none;border:0;padding:0;color:var(--navy);text-decoration:underline;font:inherit;font-size:13.5px;cursor:pointer;margin-left:4px}
+@media (max-width:560px){.gv-table td.dcell{width:72px}.gv-table td{padding:12px 6px}}
+
+/* map */
+.gv-mapart{display:block;width:100%;border-radius:12px;box-shadow:0 2px 14px rgba(0,0,0,.12)}
+.gv-keys{margin:0;padding-left:22px}
+.gv-keys li{margin-bottom:6px}
+
+/* day header */
+.gv-dayhead{text-align:center;margin-bottom:30px}
+.gv-dayhead .no{font:900 30px/1 "Montserrat",sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.gv-dayhead .dt{font:600 12.5px "Montserrat",sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);margin-top:8px}
+.gv-dayhead .tt{font-style:italic;font-size:18px;margin-top:10px}
+.gv-dayhead .no::after{content:"";display:block;width:36px;height:3px;background:var(--lime);margin:12px auto 0;border-radius:2px}
+
+/* events */
+.gv-evs{display:flex;flex-direction:column;gap:30px}
+.gv-ev{scroll-margin-top:calc(70px + var(--pv))}
+.gv-evhead{display:grid;grid-template-columns:42px minmax(0,1fr);gap:12px;align-items:center;margin-bottom:12px}
+.gv-evic{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--navy)}
+.gv-evic svg{width:20px;height:20px}
+.gv-evic.stay{background:#2e6b26}.gv-evic.activity{background:var(--orange)}.gv-evic.transfer{background:#04869d}.gv-evic.meal{background:#9a5b13}.gv-evic.note,.gv-evic.au{background:#8a8590}
+.gv-evhead h3{font:700 17px/1.3 "Montserrat",sans-serif!important}
+.gv-evhead .k{display:block;font:600 11px "Montserrat",sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);margin-bottom:2px}
+.gv-evbody{padding-left:54px;display:flex;flex-direction:column;gap:12px}
+@media (max-width:560px){.gv-evbody{padding-left:0}}
+.gv-ev.au .gv-evhead{margin:0}
+.gv-ev.au h3{font-weight:600!important;font-size:15.5px!important}
+.gv-ev.au .k{display:none}
+.gv-ev.au .sub{display:block;font:italic 14.5px "Lora",serif;color:var(--soft);font-weight:400}
+/* checkpoints (depart . duration . arrive) */
+.gv-cp{list-style:none;margin:0;padding:0;position:relative}
+.gv-cp li{position:relative;padding:0 0 12px 24px}
+.gv-cp li::before{content:"";position:absolute;left:3px;top:9px;width:11px;height:11px;border-radius:50%;background:var(--navy)}
+.gv-cp li:not(:last-child)::after{content:"";position:absolute;left:8px;top:22px;bottom:-4px;width:1px;background:#c9ccd6}
+.gv-cp li.mid{color:var(--soft);font-style:italic;font-size:14.5px}
+.gv-cp li.mid::before{background:#fff;border:2px solid #c9ccd6;width:7px;height:7px;left:4px}
+.gv-cp li:last-child{padding-bottom:0}
+.gv-lines{margin:0;display:flex;flex-direction:column;gap:2px}
+.gv-lines b{font-weight:700}
+.gv-dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;margin:0;font-size:15px}
+.gv-dl dt{font:700 11px/2.1 "Montserrat",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.gv-dl dd{margin:0}
+.gv-text{margin:0;white-space:pre-line}
+
+/* photo slider */
+.gv-slider{position:relative;border-radius:12px;overflow:hidden;background:#eee}
+.gv-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;scroll-behavior:smooth}
+.gv-track::-webkit-scrollbar{display:none}
+.gv-track img{flex:0 0 100%;width:100%;aspect-ratio:3/2;object-fit:cover;scroll-snap-align:center;display:block}
+.gv-slider .nav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:var(--txt);display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.gv-slider .nav svg{width:18px;height:18px}
+.gv-slider .prev{left:10px}.gv-slider .prev svg{transform:rotate(90deg)}
+.gv-slider .next{right:10px}.gv-slider .next svg{transform:rotate(-90deg)}
+.gv-slider .count{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.6);color:#fff;font:600 12px "Montserrat",sans-serif;border-radius:999px;padding:3px 10px}
+.gv-slider .dots{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:6px}
+.gv-slider .dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.55)}
+.gv-slider .dots span.on{background:#fff}
+
+/* more details */
+.gv-more{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.gv-more > summary{list-style:none;cursor:pointer;padding:12px 0;font:700 12.5px "Montserrat",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--navy);display:flex;align-items:center;gap:8px}
+.gv-more > summary::-webkit-details-marker{display:none}
+.gv-more > summary svg{width:16px;height:16px;transition:transform .2s}
+.gv-more[open] > summary svg{transform:rotate(180deg)}
+.gv-more .mb{padding:4px 0 20px;display:flex;flex-direction:column;gap:14px}
+.gv-more h4{font:italic 600 19px/1.35 "Lora",serif!important}
+.gv-ul{margin:0;padding-left:20px}
+.gv-ul li{margin-bottom:3px}
+.gv-acc{border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.gv-acc details+details{border-top:1px solid var(--rule)}
+.gv-acc summary{list-style:none;cursor:pointer;padding:11px 14px;font:600 14px "Montserrat",sans-serif;display:flex;justify-content:space-between;align-items:center}
+.gv-acc summary::-webkit-details-marker{display:none}
+.gv-acc summary::after{content:"+";font-size:18px;color:var(--soft)}
+.gv-acc details[open] summary::after{content:"−"}
+.gv-acc .in{padding:0 14px 12px}
+.gv-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.gv-fact{background:#f6f7f9;border-radius:10px;padding:12px 14px}
+.gv-fact b{display:block;font:700 11px "Montserrat",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);margin-bottom:2px}
+.gv-fact.green{background:#eef5e9}
+.gv-fact.green b{color:#2e6b26}
+
+/* costs, consultant, feedback */
+.gv-total{font:700 22px/1.3 "Montserrat",sans-serif;text-align:center;margin:0 0 18px}
+.gv-consult{border:1px solid var(--rule);border-radius:14px;padding:22px;text-align:center}
+.gv-consult .av{width:64px;height:64px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font:700 22px "Montserrat",sans-serif;margin:0 auto 10px}
+.gv-consult h3{font:700 19px "Montserrat",sans-serif!important}
+.gv-consult .co{color:var(--soft);font-style:italic}
+.gv-clist{list-style:none;margin:16px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;text-align:left}
+.gv-clist li{background:#f6f7f9;border-radius:10px;padding:10px 12px;font-size:14.5px;overflow-wrap:anywhere}
+.gv-clist li b{display:block;font:700 11px "Montserrat",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--soft)}
+.g-qr{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center;background:#fff;border:1px solid var(--rule);border-left:4px solid var(--lime);border-radius:14px;padding:18px 20px;margin-top:26px}
+.g-qr .code{width:150px;height:auto;display:block;border-radius:10px}
+.g-qr h3{font:700 17px "Montserrat",sans-serif!important;margin-bottom:6px!important}
+.g-qr p{margin:0 0 8px;font-size:14.5px}
+.g-qr .hint{color:var(--soft)}
+.g-qr .url{font-size:12px;color:var(--soft);overflow-wrap:anywhere;margin:8px 0 0}
+@media (max-width:560px){.g-qr{grid-template-columns:minmax(0,1fr);justify-items:start}.g-qr .code{width:150px}}
+.gv-upd{font-size:13px;color:var(--soft);text-align:center;margin-top:22px;font-style:italic}
+.gv-foot{background:var(--navy);color:#fff;padding:26px 24px;display:flex;align-items:center;gap:14px;font:13px/1.5 "Montserrat",sans-serif}
+.gv-foot img{width:46px;height:46px;border-radius:10px}
+.gv-foot a{color:#fff}
+.g-msg{max-width:520px;margin:80px auto;text-align:center;padding:0 16px}
+.g-msg h1{font-size:26px;margin-bottom:10px}
+
+@media print{
+  header.top,.previewbar,.toast,.gv-left,.gv-top,.gv-drawer,.gv-scrim,.gv-down,.gv-btnrow,.gv-tabs,.gv-slider .nav,.gv-slider .count,.gv-slider .dots,.noprint{display:none!important}
+  .gv{display:block;background:#fff;font-size:12.5px;height:auto!important;overflow:visible!important}
+  .gv-right{height:auto!important;overflow:visible!important}
+  .gv-banner{display:none}
+  .gv-cover{min-height:0;padding:20px 0}
+  .gv-sec{padding:22px 0}
+  .gv-ev,.gv-table tr,.g-qr,.gv-consult{break-inside:avoid}
+  .gv-track{overflow:visible}
+  .gv-track img:not(:first-child){display:none}
+  .gv-track img{aspect-ratio:16/7}
+  .gv-more > summary{display:none}
+  .gv-tabpanel[hidden]{display:block!important}
+  .gv-day{break-before:page}
+  .gv-foot{background:none;color:#333;border-top:1px solid #999}
+  .gv-foot a{color:#333}
+}
+
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+</head>
+<body>
+
+<!-- STAFF APP -->
+<div id="staffApp" hidden>
+<header class="top" id="hdr">
+  <div class="wrap">
+    <div class="bar">
+      <a class="brand" href="#list" id="brandLink"><span class="logo" id="logo1" style="background:none"></span><span><b>Experiences Caribbean</b><span>Guest itineraries</span></span></a>
+      <nav class="tabs" aria-label="Sections">
+        <button type="button" data-view="list">Itineraries</button>
+        <button type="button" data-view="library">Content library</button>
+        <button type="button" id="signoutBtn" hidden>Sign out</button>
+      </nav>
+    </div>
+    <div class="mode" id="mode" hidden></div>
+  </div>
+</header>
+
+<main class="staff wrap">
+  <!-- SIGN IN -->
+  <section id="view-signin" class="signin stack" hidden>
+    <div class="pagehead"><div><h1>Staff sign in</h1><p class="lede">Sign in with the same work email you use for the incident register. You need the Itineraries tick on the register&#8217;s Team page.</p></div></div>
+    <form id="signinForm" class="stack" novalidate>
+      <div class="field"><label for="si-email">Work email</label><input type="email" id="si-email" autocomplete="email"></div>
+      <div class="row"><button class="btn" type="submit" id="si-send">Email me a sign-in link</button></div>
+    </form>
+    <form id="codeForm" class="stack" novalidate hidden>
+      <p class="hint" style="margin:0">Open the link in the email on this device, or type the 6-digit code from the email.</p>
+      <div class="field"><label for="si-code">Code from the email</label><input type="text" id="si-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></div>
+      <div class="row"><button class="btn" type="submit">Sign in</button><button class="btn ghost small" type="button" id="si-back">Use a different email</button></div>
+    </form>
+    <span class="hint" id="siMsg" role="status"></span>
+  </section>
+
+  <!-- LIST -->
+  <section id="view-list" hidden>
+    <div class="pagehead">
+      <div><h1>Guest itineraries</h1><p class="lede">Build the trip once a booking is confirmed, then send the guest their link. The link stays the same and updates whenever you save, so last-minute changes reach them straight away.</p></div>
+      <div class="row"><button class="btn orange" type="button" id="newBtn">New itinerary</button></div>
+    </div>
+    <div class="filters">
+      <input type="text" id="q" placeholder="Search guest, trip or booking reference" aria-label="Search">
+      <select id="fShow" aria-label="Show">
+        <option value="upcoming">Upcoming and current trips</option>
+        <option value="past">Past trips</option>
+        <option value="drafts">Drafts</option>
+        <option value="templates">Templates</option>
+        <option value="all">All</option>
+      </select>
+    </div>
+    <div class="trips" id="tripList"></div>
+  </section>
+
+  <!-- EDITOR -->
+  <section id="view-edit" hidden>
+    <div class="edhead">
+      <button class="btn ghost small" type="button" id="backBtn">← All itineraries</button>
+      <h1 id="edTitle">New trip</h1>
+      <span class="saved" id="savedMsg" role="status"></span>
+      <button class="btn ghost small" type="button" id="previewBtn">Preview guest view</button>
+      <button class="btn small" type="button" id="saveBtn">Save</button>
+    </div>
+    <div class="edgrid">
+      <div class="stack" id="edMain"></div>
+      <aside class="side" id="edSide"></aside>
+    </div>
+  </section>
+
+  <!-- NEW ITINERARY -->
+  <div class="dlg" id="newDlg" hidden><div class="dlgbox" role="dialog" aria-modal="true" aria-labelledby="newDlgTitle">
+    <div class="row" style="justify-content:space-between"><h2 id="newDlgTitle" style="font-size:20px">New itinerary</h2><button type="button" class="btn ghost small" id="newDlgClose">Close</button></div>
+    <div class="stack" id="newDlgBody"></div>
+  </div></div>
+
+  <!-- LIBRARY -->
+  <section id="view-library" hidden>
+    <div class="pagehead">
+      <div><h1>Content library</h1><p class="lede">Hotels, tours and transfers you use often, with their descriptions, highlights, packing lists and photos. Add one to any day of an itinerary in one click. Import the tours from the website in one click, then add hotels by opening an item in an itinerary and pressing "Save to library". "Also known as" names let TourOps excursions find the right entry.</p></div>
+    </div>
+    <div class="row" style="margin-bottom:12px"><button class="btn orange" type="button" id="importWeb">Import tours from experiencescaribbean.com</button><span class="hint" id="libMsg" role="status"></span></div>
+    <div class="filters">
+      <input type="text" id="libQ" placeholder="Search the library" aria-label="Search the library">
+      <select id="libKind" aria-label="Type"><option value="">All types</option></select>
+    </div>
+    <div class="trips" id="libList"></div>
+  </section>
+</main>
+</div>
+
+<!-- GUEST VIEW (guests, and staff preview) -->
+<div id="guestApp" hidden>
+  <div class="previewbar" id="previewBar" hidden><div class="wrap"><span>Preview: this is what the guest sees.</span><button class="btn small" type="button" id="closePreview">Back to editing</button></div></div>
+  <div id="guestRoot" class="g"></div>
+</div>
+
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(function(){
+"use strict";
+
+// ---------- configuration ----------
+// Leave supabaseUrl empty to run in demo mode with an example trip (nothing is saved).
+const CONFIG = {
+  supabaseUrl: "https://krlsgdqkfxgtivrjndcq.supabase.co",   // Supabase project "TravelLife"
+  supabaseKey: "sb_publishable_xTRRDev4APnQuBCmUCV3zA_XtADh-F-", // publishable key, safe to publish
+  siteUrl: "https://trips.experiencescaribbean.com/",   // where this page is hosted; guest links are siteUrl?t=<token>
+  reportsUrl: "https://reports.experiencescaribbean.com/",
+  company: "Experiences Caribbean",
+  legalName: "Jungle Trekking Adventures and Safari Inc.",
+  website: "https://experiencescaribbean.com/",
+  helpNumber: "+1 (767) 616-5827",
+  helpTel: "+17676165827",
+  helpHours: "Call or WhatsApp during tour operating hours",
+  emergencyNumber: "",      // after-hours duty phone, when one exists
+  emergencyServices: "911", // police, fire and ambulance in Dominica (999 also works)
+  logo: "https://experiencescaribbean.com/wp-content/uploads/2025/08/86d9f8a6-a0be-42c7-b586-296c2a6424b8-all-color-logos-12-600x600.png",
+  // photos for the guest page's general sections (each itinerary can set its own cover and day photos)
+  images: {cover:"https://experiencescaribbean.com/wp-content/uploads/2025/10/Victoria-Falls-Aerial-1-scaled.jpg", concierge:"https://experiencescaribbean.com/wp-content/uploads/2026/04/home-page--scaled.jpg", brief:"https://experiencescaribbean.com/wp-content/uploads/2025/09/Aerial-Scotts-Head-Bay.jpg", mapLeft:"https://experiencescaribbean.com/wp-content/uploads/2025/09/sunrise-over-the-sea.jpg", mapArt:"https://experiencescaribbean.com/wp-content/uploads/2025/08/detailed-travel-illustrated-map-of-dominica-small.jpg", costs:"https://experiencescaribbean.com/wp-content/uploads/2025/09/The-Atlantic-Coast-scaled.jpg", help:"https://experiencescaribbean.com/wp-content/uploads/2026/04/home-page--scaled.jpg"}
+};
+
+const TZ_OFFSET_H = 4; // Dominica is UTC-4 all year (no daylight saving)
+
+// ---------- icons (fixed strings, never user text) ----------
+const P = {
+  transfer:'<path d="M3 16V11l2.2-5h13.6L21 11v5H3z"/><path d="M3 11h18"/><circle cx="7" cy="16.5" r="1.8"/><circle cx="17" cy="16.5" r="1.8"/>',
+  flight:'<path d="M10.5 3.5a1.5 1.5 0 0 1 3 0V9l8 5v2l-8-2.5V19l2 1.5V22L12 21l-3.5 1v-1.5l2-1.5v-5.5l-8 2.5v-2l8-5z"/>',
+  stay:'<path d="M3 19V6"/><path d="M3 14h18v5"/><path d="M21 14v-1a3 3 0 0 0-3-3h-7v4"/><circle cx="7" cy="11" r="1.8"/>',
+  activity:'<path d="M3 20 9 9l4 6 3-4 5 9z"/><circle cx="17" cy="5" r="2"/>',
+  meal:'<path d="M7 3v7a2 2 0 0 0 2 2v9"/><path d="M11 3v7"/><path d="M7 3v4"/><path d="M16 21V3c2.5 1 3.5 4 3.5 7s-1.5 4-3.5 4"/>',
+  note:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5h.01"/>',
+  checkout:'<path d="M14 4h5v16h-5"/><path d="M9 16l-4-4 4-4"/><path d="M5 12h11"/>',
+  overnight:'<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/>',
+  chev:'<path d="m6 9 6 6 6-6"/>',
+  phone:'<path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/>',
+  wa:'<path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3 3z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 1a4 4 0 0 1-2-2l1-1-1-2z"/>',
+  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  print:'<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/>',
+  flag:'<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+  pin:'<path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+  star:'<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9L6.5 20.2l1-6.2L3 9.6l6.2-.9z"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+  share:'<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"/>',
+  leaf:'<path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19 13 11"/>'
+};
+function icon(name, size){
+  const s=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  s.setAttribute("viewBox","0 0 24 24"); s.setAttribute("fill","none"); s.setAttribute("stroke","currentColor");
+  s.setAttribute("stroke-width","2"); s.setAttribute("stroke-linecap","round"); s.setAttribute("stroke-linejoin","round"); s.setAttribute("aria-hidden","true");
+  if(size){s.setAttribute("width",size);s.setAttribute("height",size)}
+  s.innerHTML=P[name]||""; return s;
+}
+function logoMark(){
+  const s=document.createElementNS("http://www.w3.org/2000/svg","svg"); s.setAttribute("viewBox","0 0 40 40"); s.setAttribute("width","30"); s.setAttribute("height","30"); s.setAttribute("aria-hidden","true");
+  s.innerHTML='<path d="M6 30 16 14l6 9 4-5 8 12z" fill="#2e6b26"/><circle cx="28" cy="11" r="4" fill="#ff8000"/><path d="M4 31c6-3 10 3 16 0s10 3 16 0" stroke="#04869d" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
+  return s;
+}
+// Decorative scene used when an item has no photo (works offline and inside the preview).
+const ART = {
+  transfer:["#04869d","#0b5563","#e4eab1"], flight:["#5b8fb0","#2b4a63","#f4f0db"], stay:["#2e6b26","#163d14","#e4eab1"],
+  activity:["#ff8000","#8a3f00","#ffe2bf"], meal:["#b5732a","#5c3610","#f6e1c3"], note:["#6b645c","#3a3530","#ece7cd"], hero:["#2fa3b6","#0d4a55","#e4eab1"]
+};
+function art(kind, cls){
+  const [a,b,c]=ART[kind]||ART.hero, id="g"+Math.random().toString(36).slice(2,8);
+  const s=document.createElementNS("http://www.w3.org/2000/svg","svg"); s.setAttribute("viewBox","0 0 1600 900"); s.setAttribute("preserveAspectRatio","xMidYMid slice"); s.setAttribute("aria-hidden","true"); if(cls)s.setAttribute("class",cls);
+  s.innerHTML='<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+a+'"/><stop offset="1" stop-color="'+b+'"/></linearGradient></defs>'
+   +'<rect width="1600" height="900" fill="url(#'+id+')"/><circle cx="1220" cy="230" r="110" fill="'+c+'" opacity=".55"/>'
+   +'<path d="M0 640 260 360l170 170 230-300 260 330 180-160 280 260 220-160v460H0z" fill="'+b+'" opacity=".55"/>'
+   +'<path d="M0 760 320 520l200 140 260-220 300 260 240-150 280 200v300H0z" fill="#000" opacity=".22"/>'
+   +'<path d="M0 820c140-30 260 30 400 0s260-30 400 0 260 30 400 0 260-30 400 0v80H0z" fill="'+c+'" opacity=".35"/>';
+  return s;
+}
+
+// ---------- small helpers ----------
+const $=(s,r=document)=>r.querySelector(s);
+const el=(tag,attrs={},...kids)=>{const n=document.createElement(tag);for(const[k,v] of Object.entries(attrs||{})){if(v==null||v===false)continue;if(k==="class")n.className=v;else if(k==="text")n.textContent=v;else if(k.startsWith("on"))n.addEventListener(k.slice(2),v);else n.setAttribute(k,v===true?"":v)}for(const k of kids.flat()){if(k==null||k===false)continue;n.append(k.nodeType?k:document.createTextNode(String(k)))}return n};
+const uid=()=>Math.random().toString(36).slice(2,10);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const D=s=>new Date(s+"T12:00:00Z");
+const iso=d=>d.toISOString().slice(0,10);
+const addDays=(s,n)=>iso(new Date(D(s).getTime()+n*864e5));
+const daysBetween=(a,b)=>Math.round((D(b)-D(a))/864e5);
+const fmtLong=s=>D(s).toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric",timeZone:"UTC"});
+const fmtShort=s=>D(s).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",timeZone:"UTC"});
+const fmtMD=s=>D(s).toLocaleDateString("en-US",{month:"short",day:"numeric",timeZone:"UTC"});
+const fmtRange=(a,b)=>{if(!a)return"";if(!b||a===b)return D(a).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"});const A=D(a),B=D(b),y=A.getUTCFullYear()===B.getUTCFullYear(),m=y&&A.getUTCMonth()===B.getUTCMonth();return m?fmtMD(a)+" – "+B.getUTCDate()+", "+B.getUTCFullYear():D(a).toLocaleDateString("en-US",{month:"short",day:"numeric",year:y?undefined:"numeric",timeZone:"UTC"})+" – "+D(b).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"})};
+const fmtStamp=v=>v?new Date(v).toLocaleString("en-US",{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"}):"";
+function t12(t){if(!t||!/^\d{1,2}:\d{2}/.test(t))return"";let[h,m]=t.split(":").map(Number);const ap=h>=12?"PM":"AM";h=h%12||12;return h+":"+String(m).padStart(2,"0")+" "+ap}
+const safeImg=u=>typeof u==="string"&&(/^https:\/\/[^\s"'<>]+$/i.test(u)||/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(u)||/^img\/[\w.-]+$/.test(u))?u:"";
+const digits=s=>(s||"").replace(/\D/g,"");
+function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2800)}
+function errText(e){return ((e&&(e.message||e.error_description))||"Something went wrong. Try again.").replace(/^.*?ERROR:\s*/,"")}
+function initials(n){return (n||"?").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join("")}
+function armed(btn,label,fn){ // two-step confirm (no browser dialogs)
+  btn.addEventListener("click",()=>{if(btn.classList.contains("armed")){fn();return}const o=btn.textContent;btn.classList.add("armed");btn.textContent=label;setTimeout(()=>{btn.classList.remove("armed");btn.textContent=o},3500)});
+  return btn;
+}
+
+// ---------- item types ----------
+const TYPES = {
+  transfer:{label:"Transfer", add:"Transfer"},
+  flight:{label:"Flight", add:"Flight"},
+  stay:{label:"Check in", add:"Hotel stay"},
+  activity:{label:"Activity", add:"Activity or tour"},
+  meal:{label:"Meal", add:"Meal"},
+  note:{label:"Good to know", add:"Note"}
+};
+// fields shown in the editor per type: [key, label, kind, options]
+const FIELDS = {
+  transfer:[["from","From","text",{ph:"e.g. Douglas-Charles Airport"}],["to","To","text",{ph:"e.g. Fort Young Hotel, Roseau"}],["time","Departs","time"],["duration","Duration","text",{ph:"approx. 1 hr 15 min"}],
+    ["pickup","Pick-up point","text",{ph:"e.g. Arrivals hall, driver holds a sign with your name"}],["dropoff","Drop-off point","text"],["title","Title","text",{ph:"Leave blank for \"Transfer from … to …\""}],
+    ["details","Notes for the guest","textarea",{full:1}],["images","Photos","gallery"],["about","About this transfer","textarea",{full:1,more:1}]],
+  flight:[["title","Flight","text",{ph:"e.g. Arrival flight AA 1234"}],["from","From","text",{ph:"e.g. San Juan (SJU)"}],["to","To","text",{ph:"e.g. Dominica (DOM)"}],["time","Departs","time"],["arrive","Arrives","time"],["confirmation","Booking reference","text"],["details","Notes for the guest","textarea",{full:1}]],
+  stay:[["title","Hotel or lodge","text"],["place","Area","text",{ph:"e.g. Roseau"}],["nights","Nights","number"],["room","Room type","text"],["meal","Meal plan","text",{ph:"e.g. Breakfast included"}],["confirmation","Confirmation number","text"],["mapq","Map search","text",{ph:"Name and town for Google Maps"}],
+    ["details","Notes for the guest","textarea",{full:1,ph:"Check-in time, luggage, what to expect on arrival"}],["images","Photos","gallery"],["headline","Headline","text",{full:1,more:1,ph:"e.g. A remote rainforest lodge reached by river"}],["about","About the property","textarea",{full:1,more:1}],["highlights","Highlights","lines",{full:1,more:1,ph:"One per line"}],["sustain","Sustainability","textarea",{more:1}]],
+  activity:[["title","Activity","text"],["time","Starts","time"],["duration","Duration","text",{ph:"e.g. 4 hours"}],["pickup","Pick-up","text",{ph:"e.g. Hotel lobby at 8:30 am"}],["dropoff","Drop-off","text"],["supplier","Guide or operator","text"],
+    ["details","Notes for the guest","textarea",{full:1}],["images","Photos","gallery"],["headline","Headline","text",{full:1,more:1,ph:"e.g. Swim in a 65 m waterfall"}],["about","About this activity","textarea",{full:1,more:1}],["includes","Includes","lines",{more:1,ph:"One per line"}],["bring","What to bring","lines",{more:1,ph:"One per line"}],["sustain","Sustainability","textarea",{more:1}]],
+  meal:[["title","Restaurant or meal","text"],["time","Time","time"],["place","Where","text"],["details","Notes for the guest","textarea",{full:1}]],
+  note:[["title","Heading","text"],["details","Text","textarea",{full:1}]]
+};
+function itemTitle(it){
+  if(it.type==="transfer") return it.title || (it.from&&it.to?"Transfer from "+it.from+" to "+it.to:"Transfer");
+  if(it.type==="stay") return it.title?"Check in at "+it.title:"Hotel stay";
+  return it.title || TYPES[it.type].label;
+}
+function shortLine(it){
+  const tm=t12(it.time);
+  if(it.type==="transfer") return [tm?tm+" · ":"", itemTitle(it)].join("");
+  if(it.type==="flight") return [tm?tm+" · ":"", it.title||"Flight", it.from&&it.to?" ("+it.from+" → "+it.to+")":""].join("");
+  if(it.type==="stay") return itemTitle(it)+(it.nights?" · "+it.nights+" night"+(+it.nights>1?"s":""):"");
+  return [tm?tm+" · ":"", it.title||TYPES[it.type].label].join("");
+}
+
+// ---------- trip model ----------
+function nightsOf(t){return t.start&&t.end?Math.max(0,daysBetween(t.start,t.end)):0}
+function dayCount(t){return t.start&&t.end?nightsOf(t)+1:Math.max(1,(t.data.days||[]).length)}
+function normaliseDays(t){const n=dayCount(t);t.data.days=t.data.days||[];while(t.data.days.length<n)t.data.days.push({title:"",items:[]});return t}
+// Check-out and overnight lines are worked out from each stay's nights, so staff enter a hotel once.
+function autoLines(t){
+  const out=t.data.days.map(()=>({checkout:[],overnight:[]}));
+  t.data.days.forEach((d,i)=>(d.items||[]).forEach(it=>{
+    if(it.type!=="stay"||!it.title)return; const n=Math.max(1,+it.nights||1);
+    for(let k=1;k<n;k++) if(out[i+k]) out[i+k].overnight.push(it);
+    if(out[i+n]) out[i+n].checkout.push(it);
+  }));
+  // the night of check-in day also counts as an overnight in the summary
+  return out;
+}
+function stays(t){
+  const r=[]; t.data.days.forEach((d,i)=>(d.items||[]).forEach(it=>{if(it.type==="stay"&&it.title){const n=Math.max(1,+it.nights||1);r.push({it,from:t.start?addDays(t.start,i):null,to:t.start?addDays(t.start,i+n):null,day:i})}}));
+  return r;
+}
+function defaultBrief(){
+  return "- Currency: Eastern Caribbean dollar (EC$). US dollars and major cards are widely accepted; carry some cash for markets, site passes and tips.\n- Electricity: 220–240 V. Bring a UK-style (type G) adapter.\n- We drive on the left. Your transfers are arranged, so you won't need a car.\n- Bring light rain gear, reef-safe sunscreen, insect repellent and shoes that can get wet.\n- Please don't remove shells, coral or plants, and keep to marked trails. Dominica's nature is protected.\n- Check entry requirements for your passport before you travel.";
+}
+function blankTrip(){
+  return {id:null, token:null, status:"draft", isTemplate:false, ref:"", title:"", guest:"", start:"", end:"", views:0, lastViewed:null, updatedAt:null, publishedAt:null,
+    data:{guests:2, intro:"", cover:"", brief:defaultBrief(),
+      contacts:{help:CONFIG.helpNumber, helpTel:CONFIG.helpTel, hours:CONFIG.helpHours, emergency:CONFIG.emergencyNumber},
+      consultant:{name:staff?staff.full_name:"", role:"Your travel consultant", email:"", phone:CONFIG.helpNumber, whatsapp:CONFIG.helpTel},
+      costs:{summary:"", includes:[], excludes:[], notes:""}, days:[{title:"",items:[]}]}};
+}
+
+// ---------- example data (demo mode) ----------
+function sampleTrip(){
+  const I=(type,o)=>Object.assign({id:uid(),type},o);
+  return {id:"ex1", token:"3f9a1c0d8e7b4a6f9c2d1e0b7a6f5c4d", status:"published", isTemplate:false, example:true, ref:"EC-EXAMPLE-0412", title:"Dominica Your Way", guest:"Sarah & James Whitfield",
+    start:"2026-12-03", end:"2026-12-08", views:3, lastViewed:Date.now()-26*36e5, updatedAt:Date.now()-2*864e5, publishedAt:Date.now()-5*864e5,
+    data:{guests:2, cover:"img/cover.jpg",
+      intro:"Five nights on the Nature Island: rainforest waterfalls, the hike to the Boiling Lake, snorkelling in volcanic bubbles and an afternoon with the Kalinago people.",
+      brief:defaultBrief(),
+      contacts:{help:CONFIG.helpNumber, helpTel:CONFIG.helpTel, hours:"Daily 7:00 am – 6:00 pm during your trip", emergency:""},
+      consultant:{name:"Michael Eugene", role:"Your travel consultant", email:"michael@experiencescaribbean.com", phone:CONFIG.helpNumber, whatsapp:CONFIG.helpTel},
+      costs:{summary:"Total for 2 guests sharing: US$ 4,980", includes:["5 nights' accommodation with breakfast","All private transfers","Guided tours with local guides, site passes and lunches as listed","National park site passes"], excludes:["International flights","Travel insurance","Meals not listed","Tips for guides and drivers"], notes:"Example price for the sample trip."},
+      days:[
+        {title:"Arrival in Roseau", image:"img/day1.jpg", items:[
+          I("flight",{title:"Your arrival flight",from:"San Juan (SJU)",to:"Douglas-Charles Airport (DOM)",time:"14:35",arrive:"15:30",details:"Example flight. Replace with the guest's flight details."}),
+          I("transfer",{from:"Douglas-Charles Airport",to:"Fort Young Hotel, Roseau",time:"15:45",duration:"approx. 1 hr 15 min",pickup:"Arrivals hall. Your driver will hold a sign with your name.",dropoff:"Fort Young Hotel",details:"Welcome to Dominica! The drive crosses the island through the rainforest, so it's winding and very green. Water is in the vehicle for you.",about:"Private air-conditioned vehicle with an Experiences Caribbean driver. Your driver is happy to stop for photos on the way."}),
+          I("stay",{title:"Fort Young Hotel",place:"Roseau",nights:2,room:"Ocean-view room",meal:"Breakfast included",confirmation:"EX-10442",mapq:"Fort Young Hotel, Roseau, Dominica",details:"Check-in from 3:00 pm. Your room is pre-registered, so just give your name at reception.",headline:"A historic fort on the Roseau waterfront",about:"A fort on the capital's waterfront turned into a comfortable hotel. It's an easy walk to the market, the Botanic Gardens and the museum, with sea views from the balconies.",highlights:["Waterfront location in the capital","Walk to the market, Botanic Gardens and museum","Restaurant and bar overlooking the sea","Good base for the south and west coast"],sustain:"Hires and buys locally, including produce from nearby farms."})
+        ]},
+        {title:"Waterfalls of the national park", image:"img/traf2.jpg", items:[
+          I("activity",{title:"Trafalgar Falls & Titou Gorge",time:"08:30",duration:"approx. 5 hours",pickup:"Fort Young Hotel lobby at 8:30 am",dropoff:"Fort Young Hotel",supplier:"Experiences Caribbean guide",details:"Lunch is included. Wear your swimsuit under your clothes.",images:["img/traf1.jpg","img/traf2.jpg","img/titou1.jpg","img/titou2.jpg"],headline:"Twin waterfalls and a swim through a volcanic gorge",about:"Start at Trafalgar Falls, the 'father and mother' twin falls in Morne Trois Pitons National Park, a UNESCO World Heritage Site. Then swim through Titou Gorge, a narrow volcanic canyon that ends at a hidden waterfall.",includes:["Local guide","Private transport","National park site pass","Lunch"],bring:["Swimsuit and towel","Shoes that can get wet","Reef-safe sunscreen","Insect repellent","Dry change of clothes"],sustain:"Site pass fees help maintain the trails and the national park."}),
+          I("note",{title:"Free evening",details:"Roseau's restaurants are a short walk from the hotel. Ask us for our favourites for creole food."})
+        ]},
+        {title:"Champagne Reef and the east coast", image:"img/reef1.jpg", items:[
+          I("activity",{title:"Champagne Reef snorkel",time:"09:00",duration:"approx. 2.5 hours",pickup:"Fort Young Hotel lobby at 9:00 am",supplier:"Licensed local dive operator",images:["img/reef2.jpg","img/reef1.jpg","img/reef3.jpg"],headline:"Snorkel through warm volcanic bubbles",about:"Snorkel through streams of warm volcanic bubbles rising from the sea floor in the Soufrière–Scotts Head Marine Reserve. Expect reef fish, sponges and often turtles.",includes:["Mask, snorkel and fins","Guide in the water","Marine reserve fee"],bring:["Swimsuit and towel","Reef-safe sunscreen"],sustain:"Please don't touch or stand on the coral. The reserve fee funds its protection."}),
+          I("transfer",{from:"Roseau",to:"Jungle Bay, Délices",time:"13:30",duration:"approx. 1 hr",pickup:"Fort Young Hotel lobby",dropoff:"Jungle Bay reception",details:"Your luggage travels with you."}),
+          I("stay",{title:"Jungle Bay",place:"Délices, southeast coast",nights:3,room:"Deluxe villa",meal:"Breakfast included",confirmation:"EX-77310",mapq:"Jungle Bay, Delices, Dominica",details:"Check-in from 3:00 pm. Daily yoga class included.",images:["img/jb1.jpg","img/jb4.jpg"],headline:"An eco-resort between the rainforest and the Atlantic",about:"Villas on the forested hillside above the Atlantic, close to some of the island's most dramatic waterfalls.",highlights:["Villas with forest and ocean views","Daily yoga and wellness programme","Close to Victoria and Sari Sari Falls","Restaurant using local produce"],sustain:"Built to blend into the forest, with a strong focus on local staff and produce."})
+        ]},
+        {title:"The Boiling Lake", image:"img/bl2.jpg", items:[
+          I("activity",{title:"Boiling Lake hike",time:"07:00",duration:"6–8 hours return",pickup:"Jungle Bay reception at 7:00 am",dropoff:"Jungle Bay",supplier:"Certified Waitukubuli guide",details:"A challenging full-day hike, steep and muddy in places. Packed lunch included. Your guide will check the weather that morning.",images:["img/bl1.jpg","img/bl2.jpg","img/bl3.jpg","img/bl4.jpg"],headline:"Through the Valley of Desolation to a lake that boils",about:"Cross the Valley of Desolation, an area of steaming vents and coloured streams, to reach the Boiling Lake: a flooded fumarole whose grey-blue water bubbles at near boiling point. One of Dominica's great adventures.",includes:["Certified guide","Transport","Site pass","Packed lunch and water"],bring:["Sturdy hiking shoes","Rain jacket","2 litres of water","Snacks","Change of clothes and socks for the ride back"]}),
+          I("meal",{title:"Dinner at Jungle Bay",time:"19:00",place:"Resort restaurant",details:"Included tonight, after your big hike."})
+        ]},
+        {title:"Kalinago Territory and the Emerald Pool", image:"img/kal2.jpg", items:[
+          I("activity",{title:"Kalinago Barana Autê cultural visit",time:"09:30",duration:"approx. 3 hours",pickup:"Jungle Bay reception at 9:30 am",supplier:"Kalinago guide",images:["img/kal1.jpg","img/kal2.jpg"],headline:"Meet the Caribbean's last Kalinago community",about:"Visit the Kalinago Territory on the east coast. Learn about cassava bread, basket weaving and canoe building, and walk to the Isulukati waterfall.",includes:["Kalinago guide","Entrance fee","Cassava bread tasting"],bring:["Comfortable shoes","Cash for crafts"],sustain:"Your entrance fee goes straight to the community. Buying crafts directly supports local families."}),
+          I("activity",{title:"Emerald Pool",time:"14:00",duration:"approx. 1.5 hours",images:["img/em1.jpg","img/em2.jpg"],headline:"A rainforest grotto with its own waterfall",about:"A short rainforest trail to a grotto with a waterfall and an emerald-green pool where you can swim.",bring:["Swimsuit","Towel"]})
+        ]},
+        {title:"Departure", image:"img/day6.jpg", items:[
+          I("transfer",{from:"Jungle Bay",to:"Douglas-Charles Airport",time:"08:30",duration:"approx. 1 hr 15 min",pickup:"Jungle Bay reception at 8:30 am",dropoff:"Departures, Douglas-Charles Airport",details:"Please check out before 8:30 am. We'll leave a breakfast box for you if breakfast isn't open yet."}),
+          I("flight",{title:"Your departure flight",from:"Douglas-Charles Airport (DOM)",to:"San Juan (SJU)",time:"11:50",arrive:"12:50",details:"Example flight. Check-in opens two hours before departure."})
+        ]}
+      ]}};
+}
+function sampleLibrary(){
+  const t=sampleTrip(), out=[];
+  t.data.days.forEach(d=>d.items.forEach(it=>{if(it.type==="stay"||it.type==="activity"){out.push({id:uid(),kind:it.type,name:it.title,content:libContent(it),example:true})}}));
+  const AKA={"Champagne Reef snorkel":["Champagne Reef Snorkel and Trafalgar Falls"],"Boiling Lake hike":["Adventure Boiling Lake"],"Kalinago Barana Autê cultural visit":["Ouaitukubili Kalinago Land – Indigenous Tourism","Ouaitukubili Kalinago Land"],"Emerald Pool":["Emerald Pool & Beach"],"Trafalgar Falls & Titou Gorge":["Hot Springs & Titou Gorge"]};
+  out.forEach(l=>{if(AKA[l.name])l.content.aliases=AKA[l.name]});
+  out.push({id:uid(),kind:"activity",name:"Whale watching",example:true,content:{type:"activity",title:"Whale watching",aliases:["Deep Sea Marine Adventure – Whale Watching!","Deep sea marine adventure"],duration:"approx. 3.5 hours",images:["img/whale.jpg"],headline:"Sperm whales live off Dominica all year",about:"Dominica is one of the few places in the world where sperm whales live all year. Boats follow strict rules on distance and time with the whales.",includes:["Licensed boat and crew","Hydrophone to hear the whales"],bring:["Sunscreen","Hat","Seasickness tablets if you need them"],sustain:"We only work with operators who follow Dominica's whale-watching guidelines."}});
+  return out;
+}
+
+// ---------- state ----------
+const qs=new URLSearchParams(location.search);
+const demo=!CONFIG.supabaseUrl||!CONFIG.supabaseKey;
+let sb=null, staff=null, trips=[], library=[], cur=null, dirty=false, saving=false;
+
+// ---------- database rows <-> trips ----------
+function fromRow(r){return {id:r.id,token:r.token,status:r.status,isTemplate:r.is_template,ref:r.booking_ref||"",title:r.title||"",guest:r.guest_name||"",start:r.start_date||"",end:r.end_date||"",
+  views:r.view_count||0,lastViewed:r.last_viewed_at?Date.parse(r.last_viewed_at):null,updatedAt:r.updated_at?Date.parse(r.updated_at):null,publishedAt:r.published_at?Date.parse(r.published_at):null,data:r.data||null}}
+function toRow(t){return {booking_ref:t.ref.trim()||null,title:t.title.trim()||"New trip",guest_name:t.guest.trim()||null,start_date:t.start||null,end_date:t.end||null,status:t.status,is_template:t.isTemplate,data:t.data}}
+const LIST_COLS="id,token,status,is_template,booking_ref,title,guest_name,start_date,end_date,view_count,last_viewed_at,updated_at,published_at";
+
+async function loadTrips(){
+  if(demo)return;
+  const {data,error}=await sb.from("itineraries").select(LIST_COLS).order("start_date",{ascending:true,nullsFirst:false}).limit(1000);
+  if(error){toast("Couldn't load itineraries: "+errText(error));return}
+  trips=(data||[]).map(fromRow); renderList();
+}
+async function loadLibrary(){
+  if(demo)return;
+  const {data,error}=await sb.from("itinerary_library").select("id,kind,name,content").order("name").limit(2000);
+  if(!error)library=data||[];
+}
+async function openTrip(id){
+  if(demo){cur=clone(trips.find(t=>t.id===id));normaliseDays(cur);dirty=false;show("edit");return}
+  const {data,error}=await sb.from("itineraries").select("*").eq("id",id).single();
+  if(error){toast(errText(error));return}
+  cur=fromRow(data); cur.data=Object.assign(blankTrip().data,cur.data||{}); normaliseDays(cur); dirty=false; show("edit");
+}
+async function saveTrip(quiet){
+  if(!cur||saving)return false;
+  if(cur.start&&cur.end&&cur.end<cur.start){toast("The end date is before the start date.");return false}
+  saving=true; setSaved("Saving…");
+  if(demo){
+    cur.updatedAt=Date.now(); if(!cur.id){cur.id="local"+uid();cur.token=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,"0")).join("")}
+    const i=trips.findIndex(t=>t.id===cur.id); const copy=clone(cur); if(i>=0)trips[i]=copy;else trips.push(copy);
+  } else {
+    const row=toRow(cur);
+    const q=cur.id?sb.from("itineraries").update(row).eq("id",cur.id).select(LIST_COLS).single():sb.from("itineraries").insert(row).select(LIST_COLS).single();
+    const {data,error}=await q;
+    if(error){saving=false;setSaved("Not saved",true);toast(errText(error));return false}
+    const f=fromRow(data); Object.assign(cur,{id:f.id,token:f.token,updatedAt:f.updatedAt,publishedAt:f.publishedAt,views:f.views,lastViewed:f.lastViewed});
+    const i=trips.findIndex(t=>t.id===f.id); f.data=null; if(i>=0)trips[i]=f;else trips.push(f);
+  }
+  saving=false; dirty=false; setSaved("Saved "+new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})); renderSide(); if(!quiet)toast("Itinerary saved"); return true;
+}
+async function deleteTrip(t){
+  if(t.status==="published"){toast("Unpublish it first, so the guest's link stops working.");return}
+  if(!demo){const {error}=await sb.from("itineraries").delete().eq("id",t.id);if(error){toast(errText(error));return}}
+  trips=trips.filter(x=>x.id!==t.id); renderList(); toast("Draft deleted");
+}
+async function duplicate(t,asTemplate){
+  let src=t; if(!demo&&!t.data){const {data,error}=await sb.from("itineraries").select("*").eq("id",t.id).single();if(error){toast(errText(error));return}src=fromRow(data)}
+  const c=Object.assign(blankTrip(),clone(src),{id:null,token:null,status:"draft",views:0,lastViewed:null,publishedAt:null,example:false});
+  c.isTemplate=!!asTemplate;
+  if(asTemplate){c.title=src.title;c.guest="";c.ref="";c.start="";c.end="";}
+  else if(src.isTemplate){c.guest="";c.ref="";}
+  else c.title="Copy of "+src.title;
+  c.data.days.forEach(d=>d.items.forEach(it=>{it.id=uid();delete it.confirmation}));
+  cur=normaliseDays(c); dirty=true; show("edit"); setSaved("Not saved yet",true);
+  toast(asTemplate?"Template created. Save it to keep it.":src.isTemplate?"Started from the template. Add the guest and dates.":"Copied. Change the guest and dates, then save.");
+}
+
+// ---------- library ----------
+function libContent(it){const c=clone(it);["id","time","confirmation","nights","pickup","dropoff","arrive","tourops","supplier"].forEach(k=>delete c[k]);return c}
+async function saveToLibrary(it){
+  if(!it.title){toast("Give it a name first.");return}
+  const kind=it.type, name=it.title.trim(), content=libContent(it);
+  if(demo){const i=library.findIndex(l=>l.kind===kind&&l.name===name);if(i>=0)library[i].content=content;else library.push({id:uid(),kind,name,content});toast("Saved to the library: "+name);renderAddSelects();return}
+  const {error}=await sb.from("itinerary_library").upsert({kind,name,content},{onConflict:"kind,name"});
+  if(error){toast(errText(error));return}
+  await loadLibrary(); renderAddSelects(); toast("Saved to the library: "+name);
+}
+
+// ---------- imports: TourOps bookings and website tours ----------
+// TourOps sends a booking as #tourops=<base64url JSON> (format version 1):
+// {v:1, source:"tourops", booking:{id, number, guest_name, email, phone, party_size, booking_date, source, category, notes, guests:[{name, number_in_party}]},
+//  excursions:[{date:"YYYY-MM-DD", time:"HH:MM", tour, activities:[...], driver, vehicle, guides:[...], pickup, transport:true}]}
+const norm=s=>(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/&/g," and ").replace(/[^a-z0-9]+/g," ").replace(/\b(the|tour|tours|and|a|of)\b/g," ").replace(/\s+/g," ").trim();
+function namesOf(l){return [l.name].concat(l.content&&l.content.aliases||[])}
+function matchLibrary(name,kind){
+  const n=norm(name); if(!n)return null;
+  const pool=library.filter(l=>!kind||l.kind===kind);
+  const score=l=>{let best=0;namesOf(l).forEach((a,k)=>{const m=norm(a);if(!m)return;if(m===n)best=Math.max(best,k===0?100:96);else if(m.includes(n)||n.includes(m))best=Math.max(best,60+Math.min(m.length,n.length)/Math.max(m.length,n.length)*30);
+      else{const A=new Set(m.split(" ")),B=n.split(" ");const hit=B.filter(w=>w.length>3&&A.has(w)).length;if(hit>=2)best=Math.max(best,20+hit*10)}});
+    const im=(l.content&&l.content.images)||[];
+    return best+(im.length?3:0)+(demo&&/^img\//.test(im[0]||"")?6:0)};
+  let top=null,ts=0; pool.forEach(l=>{const s=score(l);if(s>ts){ts=s;top=l}});
+  return ts>=40?top:null;
+}
+function decodePayload(s){
+  s=s.replace(/-/g,"+").replace(/_/g,"/"); while(s.length%4)s+="=";
+  const bin=atob(s), bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+const isTransfer=name=>/\b(transfer|airport|pick ?up|drop ?off|shuttle)\b/i.test(name||"");
+function fromTourOps(p){
+  const b=p.booking||{}, ex=(p.excursions||[]).filter(e=>/^\d{4}-\d{2}-\d{2}$/.test(e.date||"")).sort((a,c)=>(a.date+(a.time||"")).localeCompare(c.date+(c.time||"")));
+  const t=blankTrip();
+  const dates=ex.map(e=>e.date).concat(/^\d{4}-\d{2}-\d{2}$/.test(b.booking_date||"")?[b.booking_date]:[]).sort();
+  t.start=dates[0]||""; t.end=dates[dates.length-1]||t.start;
+  const names=(b.guests||[]).map(g=>g.name).filter(Boolean);
+  t.guest=b.guest_name||(names.length&&names.length<=3?names.join(" & "):names[0]||"");
+  t.ref=b.number||"";
+  const tours=[...new Set(ex.filter(e=>!isTransfer(e.tour)).map(e=>e.tour))];
+  t.title=b.category&&!/^(day|same day|cruise)/i.test(b.category)?b.category:(tours.length===1?tours[0]:"Your Dominica holiday");
+  t.data.guests=+b.party_size||names.length||2;
+  t.data.guestEmail=b.email||""; t.data.guestPhone=b.phone||"";
+  t.data.tourops={id:b.id||"",number:b.number||"",source:b.source||"",notes:b.notes||"",importedAt:new Date().toISOString()};
+  normaliseDays(t);
+  const missing=[];
+  ex.forEach(e=>{
+    const i=t.start?daysBetween(t.start,e.date):0, day=t.data.days[i]; if(!day)return;
+    const guides=(e.guides||[]).filter(Boolean).join(", "), drv=[e.driver,e.vehicle].filter(Boolean).join(" · ");
+    if(isTransfer(e.tour)){
+      day.items.push({id:uid(),type:"transfer",title:e.tour,time:e.time||"",pickup:e.pickup||"",details:drv?"Your driver: "+drv:"",tourops:{tour:e.tour}});
+      return;
+    }
+    const lib=matchLibrary(e.tour,"activity")||(e.activities||[]).map(a=>matchLibrary(a,"activity")).find(Boolean);
+    const it=Object.assign(lib?clone(lib.content):{}, {id:uid(),type:"activity",title:lib?lib.name:e.tour,time:e.time||"",
+      pickup:e.pickup||(e.transport!==false?"Hotel pick-up, time confirmed the day before":""),supplier:guides,
+      details:drv?"Your driver: "+drv+".":"",tourops:{tour:e.tour,activities:e.activities||[]}});
+    delete it.aliases;
+    if(!lib){if((e.activities||[]).length)it.includes=e.activities.slice();missing.push(e.tour)}
+    day.items.push(it);
+  });
+  return {trip:t,missing,count:ex.length};
+}
+function startFromTourOps(p){
+  let r; try{r=fromTourOps(p)}catch(e){toast("That TourOps booking couldn't be read.");return}
+  cur=r.trip; dirty=true; openId=null; show("edit"); setSaved("Not saved yet",true);
+  toast("Imported "+r.count+" excursion"+(r.count===1?"":"s")+" from TourOps"+(r.missing.length?". "+r.missing.length+" not in the library yet.":"."));
+}
+function pendingTourOps(){
+  try{const s=sessionStorage.getItem("ec_tourops");if(!s)return null;sessionStorage.removeItem("ec_tourops");return JSON.parse(s)}catch(_){return null}
+}
+function captureTourOpsHash(){
+  const m=location.hash.match(/^#tourops=([A-Za-z0-9_\-]+)$/); if(!m)return;
+  try{const p=decodePayload(m[1]);sessionStorage.setItem("ec_tourops",JSON.stringify(p))}catch(_){toast("That TourOps link couldn't be read.")}
+  history.replaceState(null,"",location.pathname+location.search+"#list");
+}
+// An example of what TourOps sends, for trying the import in the demo.
+function exampleTourOps(){
+  return {v:1,source:"tourops",booking:{id:"example",number:"TO-2611-0418",guest_name:"Maria & Tom Lindqvist",email:"maria.example@example.com",phone:"+46 70 000 0000",party_size:2,booking_date:"2026-12-10",source:"Direct (website enquiry)",category:"",notes:"Honeymoon. Vegetarian.",guests:[{name:"Maria Lindqvist",number_in_party:1},{name:"Tom Lindqvist",number_in_party:1}]},
+    excursions:[
+      {date:"2026-12-10",time:"15:30",tour:"Airport transfer",driver:"Example driver",vehicle:"Small minibus",pickup:"Douglas-Charles Airport, arrivals hall",transport:true},
+      {date:"2026-12-11",time:"08:30",tour:"Champagne Reef Snorkel and Trafalgar Falls",activities:["Trafalgar Falls","Champagne Reef"],driver:"Example driver",vehicle:"Small minibus",guides:["Example guide"],pickup:"Hotel lobby",transport:true},
+      {date:"2026-12-13",time:"07:00",tour:"Adventure Boiling Lake",activities:["Boiling Lake hike"],driver:"Example driver",guides:["Certified Waitukubuli guide"],pickup:"Hotel lobby",transport:true},
+      {date:"2026-12-14",time:"09:30",tour:"Ouaitukubili Kalinago Land – Indigenous Tourism",activities:["Kalinago Barana Autê","Isulukati waterfall"],driver:"Example driver",guides:["Kalinago guide"],transport:true},
+      {date:"2026-12-14",time:"14:00",tour:"Emerald Pool & Beach",activities:["Emerald Pool"],transport:true},
+      {date:"2026-12-15",time:"08:30",tour:"Airport transfer",driver:"Example driver",pickup:"Hotel lobby",transport:true}
+    ]};
+}
+
+// Website tours (WooCommerce) into the content library: name, headline, description, photos and link.
+function htmlText(h){const e=document.createElement("div");e.innerHTML=h||"";return (e.textContent||"").replace(/ /g," ").replace(/[ \t]+\n/g,"\n").replace(/\n{3,}/g,"\n\n").trim()}
+function firstSentence(s){s=(s||"").replace(/\s+/g," ").trim();const m=s.match(/^(.{20,160}?[.!?…])(\s|$)/);return m?m[1]:(s.length>140?s.slice(0,137).replace(/\s\S*$/,"")+"…":s)}
+async function websiteCatalog(){
+  if(demo)return (CONFIG.catalogSnapshot||[]).map(p=>({id:p.id,name:p.name,link:p.link,short:p.short,desc:p.desc,images:p.images}));
+  const r=await fetch(CONFIG.website+"wp-json/wc/store/v1/products?per_page=100");
+  if(!r.ok)throw new Error("The website answered "+r.status);
+  return (await r.json()).filter(p=>p.type!=="grouped").map(p=>({id:p.id,name:htmlText(p.name),link:p.permalink,short:htmlText(p.short_description),desc:htmlText(p.description),images:(p.images||[]).slice(0,5).map(i=>i.src)}));
+}
+async function importWebsite(btn){
+  const msg=$("#libMsg"); btn.disabled=true; msg.textContent="Reading the tours on experiencescaribbean.com…";
+  let items; try{items=await websiteCatalog()}catch(e){btn.disabled=false;msg.textContent="Couldn't read the website ("+errText(e)+"). Try again in a minute.";return}
+  let added=0,updated=0; const rows=[];
+  items.forEach(p=>{
+    if(!p.name)return;
+    const ex=library.find(l=>l.kind==="activity"&&(l.content.wcId===p.id||norm(l.name)===norm(p.name)));
+    const fresh={type:"activity",title:p.name,headline:firstSentence(p.short||p.desc),about:(p.desc||p.short||"").slice(0,1600),images:p.images.filter(safeImg),link:p.link,wcId:p.id};
+    if(ex){ // keep staff edits: only fill what's empty
+      const c=ex.content;let ch=false;
+      ["headline","about","link","wcId"].forEach(k=>{if(!c[k]&&fresh[k]){c[k]=fresh[k];ch=true}});
+      if(!(c.images||[]).length&&fresh.images.length){c.images=fresh.images;ch=true}
+      if(ch){updated++;rows.push({kind:"activity",name:ex.name,content:c})}
+    } else {added++;const l={id:uid(),kind:"activity",name:p.name,content:fresh};library.push(l);rows.push({kind:"activity",name:p.name,content:fresh})}
+  });
+  if(!demo&&rows.length){const {error}=await sb.from("itinerary_library").upsert(rows,{onConflict:"kind,name"});if(error){btn.disabled=false;msg.textContent=errText(error);return}await loadLibrary()}
+  btn.disabled=false; msg.textContent=added||updated?"Done: "+added+" new tour"+(added===1?"":"s")+", "+updated+" filled in. Your own edits were kept.":"Everything on the website is already in the library.";
+  renderLibrary(); renderAddSelects();
+}
+
+// "Before you send" checklist: what's missing, with one-click fixes
+function checklist(t){
+  const out=[], days=t.data.days, auto=autoLines(t);
+  const ok=(done,label,fix)=>out.push({done,label,fix});
+  ok(!!(t.title&&t.guest&&t.start&&t.end),"Trip name, guest and dates",()=>{window.scrollTo(0,0)});
+  ok(!!(t.data.guestEmail||t.data.guestPhone),"Guest email or WhatsApp",()=>{const e=document.querySelector("#edSide input[type=email]");if(e)e.focus()});
+  if(t.start&&t.end){
+    const n=nightsOf(t), covered=new Array(n).fill(false);
+    days.forEach((d,i)=>d.items.forEach(it=>{if(it.type==="stay"&&it.title){for(let k=0;k<Math.max(1,+it.nights||1);k++)if(i+k<n)covered[i+k]=true}}));
+    const gap=covered.indexOf(false);
+    if(n>0){let run=0;if(gap>=0)while(gap+run<n&&!covered[gap+run])run++;
+      ok(gap<0,gap<0?"A hotel for every night":"No hotel for "+(run===1?"the night of "+fmtShort(addDays(t.start,gap)):run+" nights from "+fmtShort(addDays(t.start,gap))),
+        ()=>addItem(gap,{type:"stay",nights:run}));}
+  }
+  const has=(i,types)=>days[i]&&days[i].items.some(it=>types.includes(it.type));
+  ok(has(0,["flight","transfer"]),"Arrival transfer or flight on day 1",()=>addItem(0,{type:"transfer",from:"Douglas-Charles Airport",time:""}));
+  if(days.length>1)ok(has(days.length-1,["flight","transfer"]),"Departure transfer or flight on the last day",()=>addItem(days.length-1,{type:"transfer",to:"Douglas-Charles Airport"}));
+  const thin=[];days.forEach((d,i)=>d.items.forEach(it=>{if((it.type==="activity"||it.type==="stay")&&(!(it.images||[]).length&&!it.image||!it.about))thin.push([i,it])}));
+  ok(!thin.length,thin.length?thin.length+" activit"+(thin.length===1?"y or hotel needs":"ies or hotels need")+" photos or a description":"Photos and descriptions on every activity and hotel",
+    ()=>{const [i,it]=thin[0];openId=it.id;renderDays();setTimeout(()=>{const e=$("#eday"+i);if(e)e.scrollIntoView({block:"start"})},0)});
+  ok(!!(t.data.costs&&t.data.costs.summary),"Price shown to the guest (optional)",()=>{const e=[...document.querySelectorAll("#edMain .card h2")].find(h=>h.textContent==="Price");if(e)e.scrollIntoView({block:"start"})});
+  return out;
+}
+function checklistCard(t){
+  const items=checklist(t), left=items.filter(x=>!x.done).length;
+  const card=el("div",{class:"card stack ck"},el("div",{class:"row",style:"justify-content:space-between"},el("b",{text:"Before you send"}),el("span",{class:"pill"+(left?"":" pub"),text:left?left+" to check":"Ready"})));
+  const ul=el("ul",{class:"cklist"});
+  items.forEach(x=>ul.append(el("li",{class:x.done?"done":""},el("span",{class:"ckmark","aria-hidden":"true"},x.done?"✓":"!"),el("span",{class:"cklabel",text:x.label}),
+    !x.done&&x.fix?el("button",{type:"button",class:"btn ghost small",onclick:x.fix},/^No hotel/.test(x.label)?"Add hotel":/Arrival|Departure/.test(x.label)?"Add":"Show"):null)));
+  card.append(ul);
+  if(t.data.tourops&&t.data.tourops.number)card.append(el("p",{class:"hint",style:"margin:0",text:"Imported from TourOps booking "+t.data.tourops.number+(t.data.tourops.source?" ("+t.data.tourops.source+")":"")+"."+(t.data.tourops.notes?" Notes: "+t.data.tourops.notes:"")}));
+  return card;
+}
+
+// Start screen for a new itinerary
+function openNewDialog(){
+  const dlg=$("#newDlg"), body=$("#newDlgBody"); body.replaceChildren();
+  const close=()=>{dlg.hidden=true};
+  const tpls=trips.filter(t=>t.isTemplate);
+  const sel=el("select",{"aria-label":"Template"},tpls.map(t=>el("option",{value:t.id,text:t.title+(nightsLabel(t)?" ("+nightsLabel(t)+")":"")})));
+  body.append(
+    el("div",{class:"choice"},el("h3",{text:"From a TourOps booking"}),el("p",{class:"hint",text:"Recommended. In TourOps, open the booking and press \"Create guest itinerary\". The guest, contact details, party size, dates, excursions, pick-ups, guides and drivers come across, and each tour is matched to its photos and description in the library."}),
+      demo?el("button",{type:"button",class:"btn orange",onclick:()=>{close();startFromTourOps(exampleTourOps())}},"Try it with an example booking"):null),
+    el("div",{class:"choice"},el("h3",{text:"From a template"}),tpls.length?el("div",{class:"row"},sel,el("button",{type:"button",class:"btn",onclick:()=>{close();const t=trips.find(x=>x.id===sel.value);if(t)duplicate(t,false)}},"Start")):el("p",{class:"hint",text:"No templates yet. Open any itinerary and press \"Save as template\" to reuse it."})),
+    el("div",{class:"choice"},el("h3",{text:"Start from scratch"}),el("p",{class:"hint",text:"An empty itinerary. Add days, hotels and tours yourself."}),el("button",{type:"button",class:"btn ghost",onclick:()=>{close();cur=blankTrip();dirty=false;openId=null;show("edit")}},"Blank itinerary")));
+  dlg.hidden=false; $("#newDlgClose").onclick=close; dlg.onclick=e=>{if(e.target===dlg)close()};
+}
+
+// ---------- views ----------
+const STAFF_VIEWS=["list","edit","library","signin"];
+let previewing=false;
+function show(v){
+  if(!STAFF_VIEWS.includes(v)&&v!=="preview"&&v!=="guest")v="list";
+  if(!demo&&!staff&&v!=="signin")v="signin";
+  if((v==="edit"||v==="preview")&&!cur)v="list";
+  if(v==="guest"){ if(!demo)v="list"; else { cur=null; showGuest(trips.find(t=>t.example)||trips[0],true); $("#previewBar span").textContent="Example itinerary: this is what your guest sees."; $("#closePreview").textContent="Open the staff editor"; setHash("guest"); return; } }
+  if(v==="preview"){showGuest(cur,true);$("#previewBar span").textContent="Preview: this is what the guest sees.";$("#closePreview").textContent="Back to editing";setHash("preview");return}
+  previewing=false; $("#guestApp").hidden=true; $("#staffApp").hidden=false;
+  STAFF_VIEWS.forEach(x=>$("#view-"+x).hidden=x!==v);
+  document.querySelectorAll("nav.tabs [data-view]").forEach(b=>{if(b.dataset.view===v||(v==="edit"&&b.dataset.view==="list"))b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
+  if(v==="list")renderList();
+  if(v==="edit")renderEditor();
+  if(v==="library")renderLibrary();
+  setHash(v); window.scrollTo(0,0);
+  document.documentElement.style.setProperty("--hdr",$("#hdr").offsetHeight+"px");
+}
+function setHash(v){if(location.hash.slice(1)!==v)history.replaceState(null,"",location.pathname+location.search+"#"+v)}
+function showGuest(t,preview){
+  previewing=preview; $("#staffApp").hidden=true; $("#guestApp").hidden=false; $("#previewBar").hidden=!preview;
+  document.body.classList.toggle("preview-on",!!preview);
+  renderGuest(t,$("#guestRoot"),{preview}); window.scrollTo(0,0);
+}
+
+// ---------- list ----------
+function tripStatus(t){
+  if(t.isTemplate)return el("span",{class:"pill tpl",text:"Template"});
+  if(t.status==="published")return el("span",{class:"pill pub",text:"Sent to guest"});
+  return el("span",{class:"pill",text:"Draft"});
+}
+function renderList(){
+  const box=$("#tripList"); box.replaceChildren();
+  const q=$("#q").value.trim().toLowerCase(), f=$("#fShow").value, today=iso(new Date(Date.now()-TZ_OFFSET_H*36e5));
+  const rows=trips.filter(t=>{
+    if(q&&![t.title,t.guest,t.ref].join(" ").toLowerCase().includes(q))return false;
+    if(f==="templates")return t.isTemplate; if(t.isTemplate)return f==="all";
+    if(f==="drafts")return t.status==="draft";
+    if(f==="upcoming")return !t.end||t.end>=today;
+    if(f==="past")return t.end&&t.end<today;
+    return true;
+  });
+  if(f==="past")rows.reverse();
+  if(!trips.length){box.append(el("div",{class:"empty"},"No itineraries yet. Press \"New itinerary\" to build the first one."));return}
+  if(!rows.length){box.append(el("div",{class:"empty",text:f==="templates"?"No templates yet. Open any itinerary and choose \"Save as template\" to reuse it for future bookings.":"Nothing matches."}));return}
+  rows.forEach(t=>{
+    const meta=[t.guest||(t.isTemplate?"":"No guest yet"), t.start?fmtRange(t.start,t.end):(t.isTemplate?nightsLabel(t):"No dates yet"), t.ref].filter(Boolean).join(" · ");
+    const seen=t.status==="published"?(t.views?"Guest opened it "+t.views+" time"+(t.views>1?"s":"")+", last "+fmtStamp(t.lastViewed):"Not opened by the guest yet"):"";
+    const del=t.status==="draft"?armed(el("button",{type:"button",class:"btn danger small"},"Delete"),"Tap again to delete",()=>deleteTrip(t)):null;
+    box.append(el("div",{class:"trip"},
+      el("div",{},el("div",{class:"row"},el("span",{class:"t",text:t.title||"Untitled trip"}),tripStatus(t),t.example?el("span",{class:"pill ex",text:"Example"}):null),
+        el("div",{class:"m",text:meta}), seen?el("div",{class:"m",text:seen}):null),
+      el("div",{class:"acts"},
+        el("button",{type:"button",class:"btn small",onclick:()=>openTrip(t.id)},t.isTemplate?"Edit template":"Open"),
+        el("button",{type:"button",class:"btn ghost small",onclick:()=>duplicate(t,false)},t.isTemplate?"Use for a booking":"Duplicate"),
+        del)));
+  });
+}
+function nightsLabel(t){const n=(t.data&&t.data.days?t.data.days.length-1:0);return n>0?n+" nights":""}
+
+// ---------- editor ----------
+let fid=0;
+function markDirty(){const was=dirty;dirty=true;setSaved("Unsaved changes",true);$("#edTitle").textContent=cur.title||"New trip";renderSideSoon(was)}
+function setSaved(m,warn){const s=$("#savedMsg");s.textContent=m;s.classList.toggle("dirty",!!warn)}
+function input(obj,key,kind,opts={}){
+  const id="f"+(++fid); let n;
+  if(kind==="textarea"||kind==="lines"){n=el("textarea",{id,placeholder:opts.ph||null,rows:kind==="lines"?4:3});n.value=kind==="lines"?(obj[key]||[]).join("\n"):(obj[key]||"")}
+  else if(kind==="select"){n=el("select",{id},opts.options.map(o=>el("option",{value:o[0],selected:String(obj[key])===o[0]},o[1])))}
+  else{n=el("input",{id,type:kind,placeholder:opts.ph||null,min:kind==="number"?"1":null,max:kind==="number"?"60":null,maxlength:kind==="text"?"300":null});n.value=obj[key]==null?"":obj[key]}
+  n.addEventListener("input",()=>{
+    let v=n.value; if(kind==="lines")v=v.split("\n").map(s=>s.trim()).filter(Boolean); if(kind==="number")v=v===""?"":Math.max(1,parseInt(v,10)||1);
+    obj[key]=v; markDirty(); if(opts.on)opts.on(v);
+  });
+  return {id,n};
+}
+function field(obj,key,label,kind="text",opts={}){
+  const {id,n}=input(obj,key,kind,opts);
+  return el("div",{class:"field"+(opts.full?" full":"")},el("label",{for:id},label,opts.hint?el("span",{class:"hint"}," "+opts.hint):null),n);
+}
+// Photo: paste a link, or upload one (resized on this device to keep the guest page light on mobile data).
+function imageField(obj,key,label,hint){
+  const id="f"+(++fid), fileId=id+"u";
+  const thumb=el("img",{class:"thumb",alt:""}); const url=el("input",{type:"url",id,placeholder:"https://… or upload"});
+  const rm=el("button",{type:"button",class:"btn ghost small"},"Remove");
+  const sync=()=>{const v=obj[key],s=safeImg(v);thumb.hidden=!s;if(s)thumb.src=s;rm.hidden=!v;url.value=v&&!/^data:/.test(v)?v:"";url.placeholder=v&&/^data:/.test(v)?"Uploaded photo":"https://… or upload"};
+  url.addEventListener("input",()=>{obj[key]=url.value.trim();sync();markDirty()});
+  rm.addEventListener("click",()=>{obj[key]="";sync();markDirty()});
+  const file=el("input",{type:"file",id:fileId,accept:"image/*",class:"vh"});
+  file.addEventListener("change",async()=>{const f=file.files[0];file.value="";if(!f)return;const d=await shrink(f,1400);if(!d){toast("That photo couldn't be read.");return}obj[key]=d;sync();markDirty()});
+  sync();
+  return el("div",{class:"field full"},el("label",{for:id},label,el("span",{class:"hint"}," "+(hint||"Landscape works best. Uploads are resized to keep the page quick to load."))),
+    el("div",{class:"imgfield"},thumb,url,el("label",{class:"btn ghost small",for:fileId},"Upload"),file,rm));
+}
+// Several photos for one item: shown as a swipeable slider on the guest page.
+function galleryField(it,label){
+  if(!Array.isArray(it.images)){it.images=it.image?[it.image]:[];delete it.image}
+  const id="f"+(++fid), fileId=id+"u", list=el("div",{class:"imgfield"});
+  const url=el("input",{type:"url",id,placeholder:"Paste a photo link (https://…)"});
+  const draw=()=>{list.replaceChildren(...it.images.map((src,k)=>el("span",{style:"position:relative;display:inline-block"},el("img",{class:"thumb",src:safeImg(src)||"",alt:"Photo "+(k+1)}),
+    el("button",{type:"button",class:"btn danger small",style:"position:absolute;top:2px;right:2px;min-height:24px;padding:0 7px","aria-label":"Remove photo "+(k+1),onclick:()=>{it.images.splice(k,1);markDirty();draw()}},"×"))));
+    if(!it.images.length)list.append(el("span",{class:"hint",text:"No photos yet."}))};
+  const addUrl=()=>{const v=url.value.trim();if(!v)return;if(!safeImg(v)){toast("Use a link that starts with https://");return}it.images.push(v);url.value="";markDirty();draw()};
+  url.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addUrl()}});
+  const file=el("input",{type:"file",id:fileId,accept:"image/*",multiple:true,class:"vh"});
+  file.addEventListener("change",async()=>{for(const f of [...file.files]){const d=await shrink(f,1400);if(d)it.images.push(d)}file.value="";markDirty();draw()});
+  draw();
+  return el("div",{class:"field full"},el("label",{for:id},label,el("span",{class:"hint"}," Guests swipe through these. Landscape photos work best.")),list,
+    el("div",{class:"imgfield"},url,el("button",{type:"button",class:"btn ghost small",onclick:addUrl},"Add link"),el("label",{class:"btn ghost small",for:fileId},"Upload"),file));
+}
+async function shrink(file,max){
+  try{let b;try{b=await createImageBitmap(file,{imageOrientation:"from-image"})}catch(_){b=await createImageBitmap(file)}
+    const k=Math.min(1,max/Math.max(b.width,b.height)),c=document.createElement("canvas");c.width=Math.round(b.width*k);c.height=Math.round(b.height*k);
+    c.getContext("2d").drawImage(b,0,0,c.width,c.height);return c.toDataURL("image/jpeg",0.72)}catch(_){return null}
+}
+
+function renderEditor(){
+  const t=cur, m=$("#edMain"); normaliseDays(t); fid=0;
+  $("#edTitle").textContent=t.title||"New trip"; setSaved(dirty?"Unsaved changes":t.updatedAt?"Saved "+fmtStamp(t.updatedAt):"Not saved yet",dirty||!t.updatedAt);
+  m.replaceChildren();
+  // trip details
+  const dates=el("div",{class:"grid"});
+  const startF=field(t,"start","Arrival date","date",{on:()=>{if(t.start&&(!t.end||t.end<t.start)){t.end=addDays(t.start,Math.max(1,(t.data.days.length||2)-1));endF.querySelector("input").value=t.end}resize()}});
+  const endF=field(t,"end","Departure date","date",{on:()=>resize()});
+  const nightsNote=el("p",{class:"hint",style:"margin:0;grid-column:1/-1"});
+  function resize(){
+    if(t.start&&t.end&&t.end>=t.start){
+      const n=daysBetween(t.start,t.end)+1;
+      if(n<t.data.days.length){const extra=t.data.days.slice(n).some(d=>d.items.length);if(extra){toast("The last days still have items. Move or delete them first.");t.end=addDays(t.start,t.data.days.length-1);endF.querySelector("input").value=t.end;}else t.data.days.length=n}
+    }
+    normaliseDays(t); nightsNote.textContent=t.start&&t.end?nightsOf(t)+" nights, "+dayCount(t)+" days":""; renderDays();
+  }
+  dates.append(startF,endF,nightsNote);
+  m.append(el("div",{class:"card"},el("h2",{text:t.isTemplate?"Template":"Trip and guest"}),
+    el("div",{class:"grid"},
+      field(t,"title","Trip name","text",{ph:"e.g. Dominica Your Way"}),
+      t.isTemplate?null:field(t,"guest","Prepared for","text",{ph:"Guest names"}),
+      field(t.data,"guests","Number of guests","number"),
+      t.isTemplate?null:field(t,"ref","Booking reference","text",{hint:"(TourOps or WooCommerce)"}),
+      field(t.data,"intro","Welcome message","textarea",{full:1,ph:"Two or three sentences the guest reads first"}),
+      imageField(t.data,"cover","Cover photo")),
+    el("div",{style:"margin-top:12px"},dates)));
+  nightsNote.textContent=t.start&&t.end?nightsOf(t)+" nights, "+dayCount(t)+" days":t.isTemplate?"Templates don't need dates. Days are added below.":"";
+  m.append(el("div",{class:"stack",id:"days"}));
+  m.append(el("div",{class:"card"},el("h2",{text:"Contacts during the trip"}),el("div",{class:"grid"},
+    field(t.data.contacts,"help","Help number","tel"), field(t.data.contacts,"hours","When it's answered","text"),
+    field(t.data.contacts,"emergency","After-hours emergency number","tel",{hint:"(optional)"})),
+    el("h2",{text:"Travel consultant",style:"margin:18px 0 12px"}),el("div",{class:"grid"},
+    field(t.data.consultant,"name","Name"),field(t.data.consultant,"role","Title"),field(t.data.consultant,"email","Email","email"),
+    field(t.data.consultant,"phone","Phone","tel"),field(t.data.consultant,"whatsapp","WhatsApp number","tel"))));
+  m.append(el("div",{class:"card"},el("h2",{text:"Price"}),el("div",{class:"grid"},
+    field(t.data.costs,"summary","Price line","text",{full:1,ph:"e.g. US$ 4,980 total for 2 guests sharing. Leave blank to hide the price."}),
+    field(t.data.costs,"includes","Included","lines",{ph:"One per line"}),field(t.data.costs,"excludes","Not included","lines",{ph:"One per line"}),
+    field(t.data.costs,"notes","Payment or price notes","textarea",{full:1}))));
+  m.append(el("div",{class:"card"},el("h2",{text:"Good to know before you travel"}),
+    field(t.data,"brief","Travel tips","textarea",{full:1,hint:"Start a line with \"- \" for a bullet."})));
+  renderDays(); renderSide();
+}
+function renderDays(){
+  const box=$("#days"), t=cur; if(!box)return; box.replaceChildren();
+  t.data.days.forEach((d,i)=>{
+    const date=t.start?fmtShort(addDays(t.start,i)):"";
+    const body=el("div",{class:"daybody"});
+    body.append(imageField(d,"image","Day photo","Shown beside this day. Leave empty to use the first activity photo."));
+    body.append(el("div",{class:"stack",style:"gap:8px",id:"autoTop"+i}));
+    d.items.forEach((it,j)=>body.append(itemEditor(it,i,j)));
+    body.append(el("div",{class:"stack",style:"gap:8px",id:"autoBot"+i}));
+    body.append(addBar(i));
+    const head=el("div",{class:"dayhead"},el("b",{text:"Day "+(i+1)+(date?" · "+date:"")}),input(d,"title","text",{ph:"Day title, e.g. Arrival in Roseau"}).n);
+    if(!t.start&&t.data.days.length>1){head.append(armed(el("button",{type:"button",class:"btn danger small"},"Remove day"),"Tap again",()=>{if(d.items.length){toast("Move or delete this day's items first.");return}t.data.days.splice(i,1);markDirty();renderDays()}))}
+    box.append(el("div",{class:"day",id:"eday"+i},head,body));
+  });
+  if(!t.start)box.append(el("div",{},el("button",{type:"button",class:"btn ghost small",onclick:()=>{t.data.days.push({title:"",items:[]});markDirty();renderDays()}},"+ Add a day")));
+  refreshAuto();
+}
+// check-out and overnight lines, refreshed as staff type (without rebuilding the open forms)
+function refreshAuto(){
+  const auto=autoLines(cur);
+  auto.forEach((a,i)=>{const top=$("#autoTop"+i),bot=$("#autoBot"+i);if(!top||!bot)return;
+    top.replaceChildren(...a.checkout.map(s=>el("div",{class:"auto"},icon("checkout"),"Check out from "+s.title+" (added automatically)")));
+    bot.replaceChildren(...a.overnight.map(s=>el("div",{class:"auto"},icon("overnight"),"Overnight at "+s.title+" (added automatically)")));
+    top.hidden=!a.checkout.length; bot.hidden=!a.overnight.length;});
+}
+let openId=null;
+function itemEditor(it,di,ii){
+  const t=cur, day=t.data.days[di];
+  const ic=el("span",{class:"ic t-"+it.type},icon(it.type));
+  const st=el("span",{class:"st"},el("b"),el("span"));
+  const upd=()=>{st.firstChild.textContent=it.type==="stay"?(it.title||"Hotel stay"):itemTitle(it);st.lastChild.textContent=[TYPES[it.type].label,t12(it.time),it.type==="stay"&&it.nights?it.nights+" night"+(+it.nights>1?"s":""):""].filter(Boolean).join(" · ")};
+  upd();
+  const det=el("details",{class:"itm",open:openId===it.id}, el("summary",{},ic,st,el("span",{class:"chev"},icon("chev",18))));
+  det.addEventListener("toggle",()=>{if(det.open)openId=it.id;else if(openId===it.id)openId=null});
+  const main=el("div",{class:"grid"}), more=el("div",{class:"grid"});
+  FIELDS[it.type].forEach(([k,label,kind,o={}])=>{
+    const target=o.more?more:main;
+    if(kind==="gallery")target.append(galleryField(it,label));
+    else if(kind==="image")target.append(imageField(it,k,label));
+    else target.append(field(it,k,label,kind,Object.assign({},o,{on:()=>{upd();if(it.type==="stay"&&(k==="nights"||k==="title"))refreshAuto()}})));
+  });
+  const body=el("div",{class:"itmbody"},main);
+  if(more.childNodes.length)body.append(el("div",{class:"lbl",style:"margin-top:2px;color:var(--orange-ink);text-transform:uppercase;letter-spacing:.06em;font-size:12px",text:"Shown under \"More details\""}),more);
+  const mv=el("select",{"aria-label":"Move to day"},el("option",{value:"",text:"Move to day…"}),t.data.days.map((_,k)=>k===di?null:el("option",{value:k,text:"Day "+(k+1)+(t.start?" · "+fmtShort(addDays(t.start,k)):"")})));
+  mv.addEventListener("change",()=>{const k=+mv.value;if(mv.value==="")return;day.items.splice(ii,1);t.data.days[k].items.push(it);openId=it.id;markDirty();renderDays();setTimeout(()=>{const e=$("#eday"+k);e&&e.scrollIntoView({block:"start"})},0)});
+  body.append(el("div",{class:"itmacts"},
+    el("button",{type:"button",class:"btn ghost small",disabled:ii===0,onclick:()=>{day.items.splice(ii-1,0,day.items.splice(ii,1)[0]);markDirty();renderDays()}},"↑ Up"),
+    el("button",{type:"button",class:"btn ghost small",disabled:ii===day.items.length-1,onclick:()=>{day.items.splice(ii+1,0,day.items.splice(ii,1)[0]);markDirty();renderDays()}},"↓ Down"),
+    mv,
+    ["stay","activity","transfer"].includes(it.type)?el("button",{type:"button",class:"btn ghost small",onclick:()=>saveToLibrary(it)},"Save to library"):null,
+    el("span",{style:"flex:1"}),
+    armed(el("button",{type:"button",class:"btn danger small"},"Delete"),"Tap again to delete",()=>{day.items.splice(ii,1);markDirty();renderDays()})));
+  det.append(body);
+  return det;
+}
+function addBar(di){
+  const bar=el("div",{class:"addbar"},el("span",{class:"hint",text:"Add:"}));
+  Object.entries(TYPES).forEach(([k,v])=>bar.append(el("button",{type:"button",class:"btn ghost",onclick:()=>addItem(di,{type:k,nights:k==="stay"?1:undefined})},"+ "+v.add)));
+  const sel=el("select",{class:"libsel","data-day":di,"aria-label":"Add from the content library"}); fillLibSelect(sel);
+  sel.addEventListener("change",()=>{const l=library.find(x=>x.id===sel.value);sel.value="";if(!l)return;const it=Object.assign(clone(l.content),{id:uid(),type:l.kind});if(it.type==="stay")it.nights=1;addItem(di,it)});
+  bar.append(sel); return bar;
+}
+function fillLibSelect(sel){
+  sel.replaceChildren(el("option",{value:"",text:library.length?"From the library…":"Library is empty"}));
+  ["stay","activity","transfer","flight","meal","note"].forEach(k=>{const ls=library.filter(l=>l.kind===k);if(!ls.length)return;sel.append(el("optgroup",{label:k==="stay"?"Hotels":TYPES[k].label+"s"},ls.map(l=>el("option",{value:l.id,text:l.name}))))});
+}
+function renderAddSelects(){document.querySelectorAll(".libsel").forEach(fillLibSelect)}
+function addItem(di,it){it.id=it.id||uid();Object.keys(it).forEach(k=>it[k]===undefined&&delete it[k]);cur.data.days[di].items.push(it);openId=it.id;markDirty();renderDays();const n=document.querySelector("details.itm[open] input,details.itm[open] textarea");if(n){n.focus();n.scrollIntoView({block:"center"})}}
+
+function guestLink(t){return t.token?CONFIG.siteUrl+"?t="+t.token:""}
+function shareText(t){
+  const first=(t.guest||"").split(/\s*(?:&|and|,)\s*/)[0]||"there";
+  return "Hi "+first+", your itinerary for "+(t.title||"your trip")+(t.start?" ("+fmtRange(t.start,t.end)+")":"")+" is ready: "+guestLink(t)+"\n\nIt has your transfers, hotels, tours and our contact numbers, and it updates automatically if anything changes. Any questions, just reply here.\n\n"+((t.data.consultant&&t.data.consultant.name)||CONFIG.company);
+}
+function renderSide(){
+  const s=$("#edSide"), t=cur; if(!s||!t)return; s.replaceChildren();
+  const card=el("div",{class:"card stack"});
+  if(t.isTemplate){
+    card.append(el("div",{class:"row"},tripStatus(t)),el("p",{class:"hint",style:"margin:0",text:"Templates are never sent to guests. Use one for a new booking from the list, then add the guest and dates."}),
+      el("button",{type:"button",class:"btn orange",onclick:async()=>{if(dirty&&!(await saveTrip(true)))return;duplicate(t,false)}},"Use for a booking"));
+    s.append(card); return;
+  }
+  s.append(checklistCard(t));
+  card.append(el("div",{class:"row"},el("b",{text:"Guest link"}),tripStatus(t)));
+  card.append(el("div",{class:"grid",style:"grid-template-columns:1fr"},field(t.data,"guestEmail","Guest email","email"),field(t.data,"guestPhone","Guest WhatsApp","tel",{hint:"(with country code)"})));
+  if(t.status==="published"){
+    const link=guestLink(t);
+    const inp=el("input",{type:"text",readonly:true,value:link,"aria-label":"Guest link"});
+    card.append(el("div",{class:"sharelink"},inp,el("button",{type:"button",class:"btn small",onclick:async()=>{inp.select();try{await navigator.clipboard.writeText(link);toast("Link copied")}catch(_){toast("Select the link and copy it")}}},"Copy")));
+    const phone=digits(t.data.guestPhone);
+    card.append(el("div",{class:"row"},
+      el("a",{class:"wa",href:"https://wa.me/"+(phone||"")+"?text="+encodeURIComponent(shareText(t)),target:"_blank",rel:"noopener"},icon("wa"),"Send on WhatsApp"),
+      el("a",{class:"btn ghost small",href:"mailto:"+encodeURIComponent(t.data.guestEmail||"")+"?subject="+encodeURIComponent("Your itinerary: "+(t.title||"your trip"))+"&body="+encodeURIComponent(shareText(t))},icon("mail"),"Email")));
+    card.append(el("p",{class:"hint",style:"margin:0",text:t.views?"Opened by the guest "+t.views+" time"+(t.views>1?"s":"")+", last "+fmtStamp(t.lastViewed)+".":"The guest hasn't opened it yet."}));
+    if(dirty)card.append(el("p",{class:"hint",style:"margin:0;color:var(--orange-ink);font-weight:700",text:"Save to update what the guest sees."}));
+    card.append(armed(el("button",{type:"button",class:"btn danger small"},"Unpublish"),"Tap again: the link stops working",async()=>{t.status="draft";if(!(await saveTrip(true))){t.status="published";return}toast("Unpublished. The guest's link no longer opens.");renderSide()}));
+  } else {
+    card.append(el("p",{class:"hint",style:"margin:0",text:"Draft: only staff can see it. Publish to get the guest's link. You can keep editing afterwards; the guest sees each saved change."}));
+    const missing=[!t.title&&"a trip name",!t.guest&&"the guest's name",!(t.start&&t.end)&&"the dates"].filter(Boolean);
+    if(missing.length)card.append(el("p",{class:"hint",style:"margin:0",text:"Before publishing, add "+missing.join(", ")+"."}));
+    card.append(el("button",{type:"button",class:"btn orange",disabled:!!missing.length,onclick:async()=>{t.status="published";if(!(await saveTrip(true))){t.status="draft";return}toast("Published. Copy the link or send it on WhatsApp.");renderSide()}},"Publish and get the link"));
+  }
+  s.append(card);
+  s.append(el("div",{class:"card stack"},el("b",{text:"Reuse"}),
+    el("button",{type:"button",class:"btn ghost small",onclick:async()=>{if(dirty&&!(await saveTrip(true)))return;duplicate(t,true)}},"Save as template"),
+    el("p",{class:"hint",style:"margin:0",text:"Templates keep the days, hotels and tours without the guest, dates or confirmation numbers, so next time you only change the details."})));
+}
+let rsT=null; function renderSideSoon(){clearTimeout(rsT);rsT=setTimeout(()=>{if(!cur||$("#view-edit").hidden)return;
+  const side=$("#edSide"),a=document.activeElement,list=[...side.querySelectorAll("input,textarea,select")],idx=list.indexOf(a);
+  if(idx>=0)return; // don't redraw the panel while someone is typing in it
+  renderSide()},600)}
+document.addEventListener("focusout",e=>{if(e.target.closest&&e.target.closest("#edSide")&&cur)setTimeout(()=>{if(!$("#edSide").contains(document.activeElement))renderSide()},50)});
+
+// ---------- library view ----------
+function renderLibrary(){
+  const box=$("#libList"), q=$("#libQ").value.trim().toLowerCase(), k=$("#libKind").value; box.replaceChildren();
+  const rows=library.filter(l=>(!k||l.kind===k)&&(!q||(l.name+" "+(l.content.about||"")).toLowerCase().includes(q))).sort((a,b)=>a.kind.localeCompare(b.kind)||a.name.localeCompare(b.name));
+  if(!library.length){box.append(el("div",{class:"empty",text:"The library is empty. Open an item in an itinerary and press \"Save to library\"."}));return}
+  if(!rows.length){box.append(el("div",{class:"empty",text:"Nothing matches."}));return}
+  rows.forEach(l=>box.append(el("div",{class:"libitem"},el("span",{class:"ic t-"+l.kind},icon(l.kind)),
+    el("div",{class:"who"},el("b",{text:l.name}),el("span",{text:[l.kind==="stay"?"Hotel":TYPES[l.kind].label,l.content.place,l.content.about].filter(Boolean).join(" · ")})),
+    l.example?el("span",{class:"pill ex",text:"Example"}):null,
+    l.content.link?el("a",{class:"pill",href:l.content.link,target:"_blank",rel:"noopener",text:"On the website"}):null,
+    el("button",{type:"button",class:"btn ghost small",onclick:e=>libEditor(l,e.currentTarget.closest(".libitem"))},"Edit names"),
+    armed(el("button",{type:"button",class:"btn danger small"},"Delete"),"Tap again",async()=>{
+      if(!demo){const {error}=await sb.from("itinerary_library").delete().eq("id",l.id);if(error){toast(errText(error));return}}
+      library=library.filter(x=>x.id!==l.id);renderLibrary();toast("Removed from the library")}))));
+}
+
+// The client's own QR code for the Incident & Feedback Register (opens reports.experiencescaribbean.com/#report)
+const REGISTER_QR="data:image/png;base64,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";
+function reportUrl(t){return CONFIG.reportsUrl+"?tour="+encodeURIComponent(t.ref||t.title||"")+"#report"}
+function concernCard(t){
+  const url=reportUrl(t);
+  return el("div",{class:"g-qr"},el("img",{class:"code",src:REGISTER_QR,width:"540",height:"630",alt:"QR code: Experiences Caribbean Incident & Feedback Register"}),
+    el("div",{},el("h3",{text:"Problem, concern or compliment?"}),
+      el("p",{text:"Scan the code or tap the button to tell us about anything on your trip: a complaint, an accident or near miss, a worry about wildlife, a supplier or someone's safety, or something we did well. Every report gets a reference number and a named person who follows it up. You can report anonymously."}),
+      el("p",{class:"hint",text:"Life-threatening emergency? Call "+CONFIG.emergencyServices+" first, then call us."}),
+      el("a",{class:"btn small",href:url,target:"_blank",rel:"noopener"},icon("flag"),"Report a problem or concern"),
+      el("p",{class:"url",text:"reports.experiencescaribbean.com"})));
+}
+
+function libEditor(l,row){
+  if(row.querySelector(".libedit")){row.querySelector(".libedit").remove();return}
+  const name=el("input",{type:"text",value:l.name,"aria-label":"Name"}), al=el("textarea",{rows:3,placeholder:"One per line, e.g. the tour's name in TourOps"});al.value=(l.content.aliases||[]).join("\n");
+  const msg=el("span",{class:"hint",role:"status"});
+  const save=async()=>{const nm=name.value.trim();if(!nm){msg.textContent="Give it a name.";return}
+    const aliases=al.value.split("\n").map(x=>x.trim()).filter(Boolean), content=Object.assign({},l.content,{aliases,title:nm});
+    if(!demo){const q=nm===l.name?sb.from("itinerary_library").update({content}).eq("id",l.id):sb.from("itinerary_library").update({name:nm,content}).eq("id",l.id);const {error}=await q;if(error){msg.textContent=errText(error);return}}
+    l.name=nm;l.content=content;toast("Saved");renderLibrary();renderAddSelects()};
+  row.append(el("div",{class:"libedit"},el("label",{class:"lbl",text:"Name"}),name,el("label",{class:"lbl",text:"Also known as (TourOps or other names)"}),al,el("div",{class:"row"},el("button",{type:"button",class:"btn small",onclick:save},"Save"),msg)));
+}
+// ---------- guest view (layout modelled on the client's Safari Portal sample) ----------
+let guestIO=null;
+function imgsOf(it){const a=(it.images||[]).slice();if(it.image&&!a.includes(it.image))a.unshift(it.image);return a.map(safeImg).filter(Boolean)}
+function dayImage(t,i){const d=t.data.days[i];if(safeImg(d.image))return d.image;for(const it of d.items){const a=imgsOf(it);if(a.length)return a[0]}return safeImg(CONFIG.images.brief)||""}
+function logoImg(cls){
+  const src=safeImg(CONFIG.logo);
+  if(!src){const s=el("span",{class:cls,style:"display:grid;place-items:center;background:#e48725"});s.append(logoMark());return s}
+  const i=el("img",{class:cls,src,alt:CONFIG.company+" logo"});
+  i.addEventListener("error",()=>{const s=el("span",{class:cls,style:"display:grid;place-items:center;background:#e48725"});s.append(logoMark());i.replaceWith(s)});
+  return i;
+}
+const mapsUrl=it=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(it.mapq||it.title+", Dominica");
+const telLink=n=>el("a",{href:"tel:+"+digits(n)},el("b",{text:n}));
+const EVICON={transfer:"transfer",flight:"flight",stay:"stay",activity:"activity",meal:"meal",note:"note"};
+const KIND={transfer:"Private transfer",flight:"Flight",stay:"Accommodation",activity:"Activity",meal:"Dining",note:"Good to know"};
+
+function slider(imgs,alt){
+  if(!imgs.length)return null;
+  const track=el("div",{class:"gv-track"},imgs.map((s,k)=>el("img",{src:s,alt:(alt||"Photo")+(imgs.length>1?" ("+(k+1)+" of "+imgs.length+")":""),loading:k?"lazy":"eager"})));
+  const box=el("div",{class:"gv-slider"},track);
+  track.querySelectorAll("img").forEach(i=>i.addEventListener("error",()=>{i.remove();if(!track.querySelector("img"))box.remove()}));
+  if(imgs.length>1){
+    const count=el("span",{class:"count",text:"1 / "+imgs.length});
+    const step=dir=>track.scrollBy({left:dir*track.clientWidth,behavior:"smooth"});
+    box.append(el("button",{type:"button",class:"nav prev","aria-label":"Previous photo",onclick:()=>step(-1)},icon("chev")),
+      el("button",{type:"button",class:"nav next","aria-label":"Next photo",onclick:()=>step(1)},icon("chev")),count);
+    track.addEventListener("scroll",()=>{const k=Math.round(track.scrollLeft/Math.max(1,track.clientWidth));count.textContent=(k+1)+" / "+imgs.length},{passive:true});
+  }
+  return box;
+}
+function evHead(type,title,kind,sub){
+  return el("div",{class:"gv-evhead"},el("span",{class:"gv-evic "+type},icon(EVICON[type]||type)),
+    el("div",{},kind?el("span",{class:"k",text:kind}):null,el("h3",{text:title}),sub?el("span",{class:"sub",text:sub}):null));
+}
+function autoEvent(kind,title,sub){return el("div",{class:"gv-ev au"},el("div",{class:"gv-evhead"},el("span",{class:"gv-evic au"},icon(kind)),el("div",{},el("h3",{text:title}),sub?el("span",{class:"sub",text:sub}):null)))}
+function eventBlock(it){
+  const type=it.type, box=el("article",{class:"gv-ev",id:"gi-"+it.id});
+  box.append(evHead(type,itemTitle(it),KIND[type]));
+  const b=el("div",{class:"gv-evbody"});
+  if(type==="transfer"||type==="flight"){
+    const cp=el("ol",{class:"gv-cp"});
+    const dep=[it.time?el("b",{text:t12(it.time)}):null,it.time&&it.from?" · ":"",it.from?"Depart "+it.from:""];
+    if(it.time||it.from)cp.append(el("li",{},dep));
+    if(type==="transfer"&&it.duration)cp.append(el("li",{class:"mid",text:"Transfer duration: "+it.duration}));
+    if(type==="flight"&&it.title)cp.append(el("li",{class:"mid",text:it.title}));
+    if(it.to||it.arrive)cp.append(el("li",{},it.arrive?el("b",{text:t12(it.arrive)}):null,it.arrive&&it.to?" · ":"",it.to?"Arrive "+it.to:""));
+    if(cp.childNodes.length)b.append(cp);
+  } else if(type==="stay"){
+    const ln=el("p",{class:"gv-lines"});
+    if(it.room||it.meal)ln.append(el("span",{text:[it.room,it.meal?"("+it.meal+")":""].filter(Boolean).join(" ")}));
+    if(it.nights)ln.append(el("span",{text:it.nights+" Night"+(+it.nights>1?"s":"")}));
+    if(it.confirmation)ln.append(el("span",{},"Confirmation Number: ",el("b",{text:it.confirmation})));
+    if(ln.childNodes.length)b.append(ln);
+  } else if(it.time||it.duration){
+    b.append(el("p",{class:"gv-lines"},el("span",{},it.time?el("b",{text:t12(it.time)}):null,it.time?" · "+(type==="meal"?"Reservation":"Start time"):"",it.duration?(it.time?" · ":"")+it.duration:"")));
+  }
+  const dl=el("dl",{class:"gv-dl"}); const add=(k,v)=>{if(v)dl.append(el("dt",{text:k}),el("dd",{text:v}))};
+  add("Pick up",it.pickup); add("Drop off",it.dropoff); if(type==="activity")add("With",it.supplier); if(type==="meal")add("Where",it.place);
+  if(type==="flight")add("Booking ref",it.confirmation);
+  if(dl.childNodes.length)b.append(dl);
+  if(it.details)b.append(el("p",{class:"gv-text",text:it.details}));
+  const sl=slider(imgsOf(it),it.title); if(sl)b.append(sl);
+  // more details: headline, description, highlights, includes / what to bring, fast facts
+  const mb=el("div",{class:"mb"});
+  if(it.headline)mb.append(el("h4",{text:it.headline}));
+  if(it.about)mb.append(el("p",{class:"gv-text",text:it.about}));
+  if((it.highlights||[]).length)mb.append(el("div",{},el("div",{class:"gv-sub",style:"margin-top:0!important",text:"Highlights"}),el("ul",{class:"gv-ul"},it.highlights.map(x=>el("li",{text:x})))));
+  const acc=el("div",{class:"gv-acc"});
+  [["includes","What's included"],["bring","What to bring"]].forEach(([k,l])=>{if((it[k]||[]).length)acc.append(el("details",{},el("summary",{text:l}),el("div",{class:"in"},el("ul",{class:"gv-ul"},it[k].map(x=>el("li",{text:x}))))))});
+  if(acc.childNodes.length)mb.append(acc);
+  const facts=el("div",{class:"gv-facts"});
+  if(type==="stay"&&it.meal)facts.append(el("div",{class:"gv-fact"},el("b",{text:"Meals"}),it.meal));
+  if(type==="activity"&&it.duration)facts.append(el("div",{class:"gv-fact"},el("b",{text:"Duration"}),it.duration));
+  if(it.sustain)facts.append(el("div",{class:"gv-fact green"},el("b",{text:"Sustainable"}),it.sustain));
+  if(facts.childNodes.length)mb.append(facts);
+  if(type==="stay"&&it.title)mb.append(el("a",{href:mapsUrl(it),target:"_blank",rel:"noopener"},"Open "+it.title+" in Google Maps"));
+  if(it.link&&/^https:\/\//.test(it.link))mb.append(el("a",{href:it.link,target:"_blank",rel:"noopener"},"See this tour on our website"));
+  if(mb.childNodes.length&&type!=="note")b.append(el("details",{class:"gv-more"},el("summary",{},"More details",icon("chev")),mb));
+  if(b.childNodes.length)box.append(b);
+  return box;
+}
+
+function renderGuest(t,root,opts={}){
+  root.replaceChildren(); if(guestIO){guestIO.disconnect();guestIO=null}
+  if(!t){root.append(el("div",{class:"g-msg"},el("h1",{text:"Itinerary not found"}),el("p",{text:"This link may have been replaced or switched off. Please contact us and we'll send you the current one."}),contactLine()));return}
+  t=clone(t); normaliseDays(t); const d=t.data, auto=autoLines(t), sts=stays(t), IM=CONFIG.images||{};
+  const secs=[], main=el("main",{class:"gv-main"});
+  const S=(id,label,sub,img,cls)=>{const n=el("section",{class:"gv-sec"+(cls?" "+cls:""),id});img=safeImg(img);if(img)n.append(el("figure",{class:"gv-banner"},el("img",{src:img,alt:"",loading:secs.length>1?"lazy":"eager"})));secs.push({id,label,sub,img,node:n});main.append(n);return n};
+  const H=txt=>el("h2",{class:"gv-h",text:txt});
+  const go=id=>{const e=root.querySelector("#"+id);if(e)e.scrollIntoView({block:"start"});closeMenu()};
+
+  // cover
+  const cv=S("gv-cover","Cover page","",d.cover||d.image||IM.cover,"gv-cover");
+  cv.append(logoImg("gv-coverlogo"),el("h1",{class:"gv-title",text:t.title||"Your trip"}),
+    t.guest?el("p",{class:"gv-for",text:"Prepared for "+t.guest}):null,
+    t.start?el("p",{class:"gv-dates",text:fmtRange(t.start,t.end)}):null,
+    d.intro?el("p",{class:"gv-intro",text:d.intro}):null,
+    el("button",{type:"button",class:"gv-down","aria-label":"Start reading",onclick:()=>go("gv-concierge")},icon("chev")));
+
+  // concierge & emergency
+  const c=d.contacts||{}, help=c.help||CONFIG.helpNumber;
+  S("gv-concierge","Concierge & emergency contacts","",IM.concierge).append(H("Concierge & emergency contact numbers"),
+    el("div",{class:"gv-prose gv-center"},
+      el("p",{},"For assistance, call or WhatsApp our team on ",telLink(help),c.hours?", "+c.hours.replace(/^./,m=>m.toLowerCase()):"","."),
+      c.emergency?el("p",{},"Urgent problems after hours: ",telLink(c.emergency)," (24 hours, also on WhatsApp)."):null,
+      el("p",{},"In a life-threatening emergency call ",el("a",{href:"tel:"+CONFIG.emergencyServices},el("b",{text:CONFIG.emergencyServices}))," first (police, fire and ambulance in Dominica), then call us.")),
+    el("div",{class:"gv-btnrow"},el("a",{class:"gv-pill",href:"tel:+"+digits(help)},icon("phone"),"Call us"),
+      el("a",{class:"gv-pill wa",href:"https://wa.me/"+digits(help),target:"_blank",rel:"noopener"},icon("wa"),"WhatsApp us")));
+
+  // travel brief: overview table, accommodations, before you travel
+  const tb=S("gv-brief","Travel brief","",IM.brief);
+  tb.append(H("Travel brief"),el("div",{class:"gv-btnrow"},el("button",{type:"button",class:"gv-pill ghost",onclick:()=>downloadIcs(t)},icon("cal"),"Sync to calendar")));
+  const ov=el("table",{class:"gv-table"},el("thead",{},el("tr",{},el("th",{text:"Day"}),el("th",{text:"Activities"}))));
+  const ovb=el("tbody"); ov.append(ovb);
+  d.days.forEach((day,i)=>{
+    const date=t.start?addDays(t.start,i):null, ul=el("ul",{class:"gv-acts-list"});
+    const li=(ic,parts,target,isAuto)=>ul.append(el("li",{class:isAuto?"au":null},icon(ic),el("span",{},parts,target?el("button",{type:"button",class:"gv-link",onclick:()=>{const e=root.querySelector("#"+target);if(e){e.scrollIntoView({block:"start"});const m=e.querySelector("details.gv-more");if(m)m.open=true}}},"More details"):null)));
+    auto[i].checkout.forEach(s=>li("checkout",["Check out from "+s.title],null,true));
+    day.items.forEach(it=>{
+      const tm=t12(it.time); let txt;
+      if(it.type==="transfer")txt=[tm?el("span",{class:"tm",text:tm+" – "}):null,"Transfer departs "+(it.from||"")," ",el("br"),"Transfer arrives "+(it.to||"")];
+      else if(it.type==="flight")txt=[tm?el("span",{class:"tm",text:tm+" – "}):null,(it.title||"Flight")+(it.from&&it.to?" ("+it.from+" → "+it.to+")":"")];
+      else if(it.type==="stay")txt=["Check in at "+it.title];
+      else txt=[tm?el("span",{class:"tm",text:tm+" · "}):null,it.title||KIND[it.type]];
+      li(it.type,txt,"gi-"+it.id);
+    });
+    auto[i].overnight.forEach(s=>li("overnight",["Overnight at "+s.title],null,true));
+    if(!ul.childNodes.length)ul.append(el("li",{class:"au"},icon("star"),el("span",{text:"Free day to explore"})));
+    ovb.append(el("tr",{},el("td",{class:"dcell"},el("b",{text:"Day "+(i+1)}),date?el("span",{text:D(date).toLocaleDateString("en-US",{weekday:"short",timeZone:"UTC"})}):null,date?el("span",{text:D(date).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"})}):null),el("td",{},ul)));
+  });
+  const acc=el("table",{class:"gv-table"},el("thead",{},el("tr",{},el("th",{text:"Dates"}),el("th",{text:"Accommodation"}))),
+    el("tbody",{},sts.length?sts.map(s=>el("tr",{},el("td",{class:"dcell"},el("b",{text:s.from?fmtMD(s.from)+" –":""}),el("span",{text:s.to?fmtMD(s.to):""})),
+      el("td",{},el("b",{text:s.it.title}),el("br"),el("span",{text:[s.it.room,s.it.meal?"("+s.it.meal+")":"",s.it.nights?"· "+s.it.nights+" night"+(+s.it.nights>1?"s":""):""].filter(Boolean).join(" ")}),
+        s.it.confirmation?el("div",{class:"hint",text:"Confirmation "+s.it.confirmation}):null))):[el("tr",{},el("td",{colspan:"2",text:"No accommodation in this itinerary."}))]));
+  const panels=[["Overview",ov],["Accommodations",acc]];
+  if(d.brief&&d.brief.trim())panels.push(["Before you travel",el("div",{class:"gv-prose"},richText(d.brief))]);
+  const tabs=el("div",{class:"gv-tabs",role:"tablist"}), pans=panels.map(([l,n],k)=>el("div",{class:"gv-tabpanel",role:"tabpanel",hidden:k>0},n));
+  panels.forEach(([l],k)=>tabs.append(el("button",{type:"button",role:"tab","aria-selected":k===0?"true":"false",onclick:e=>{tabs.querySelectorAll("button").forEach((b,j)=>b.setAttribute("aria-selected",j===k?"true":"false"));pans.forEach((p,j)=>p.hidden=j!==k)}},l)));
+  tb.append(tabs,...pans);
+
+  // map and key dates
+  if(sts.length||IM.mapArt){
+    const mp=S("gv-map","Map","",IM.mapLeft);
+    mp.append(H("Map"));
+    if(safeImg(IM.mapArt))mp.append(el("img",{class:"gv-mapart",src:IM.mapArt,alt:"Illustrated map of Dominica",loading:"lazy"}));
+    if(sts.length)mp.append(el("h3",{class:"gv-sub",text:"Key dates"}),el("ol",{class:"gv-keys"},sts.map(s=>el("li",{},s.from?el("b",{text:fmtMD(s.from)+" – "+fmtMD(s.to)+": "}):null,s.it.title+(s.it.place?", "+s.it.place:"")+" ",el("a",{href:mapsUrl(s.it),target:"_blank",rel:"noopener"},"map")))));
+  }
+
+  // days
+  d.days.forEach((day,i)=>{
+    const date=t.start?addDays(t.start,i):null;
+    const sec=S("gv-day"+i,"Day "+(i+1),date?fmtShort(date):(day.title||""),dayImage(t,i),"gv-day");
+    sec.append(el("div",{class:"gv-dayhead"},el("div",{class:"no",text:"Day "+(i+1)}),
+      date?el("div",{class:"dt",text:D(date).toLocaleDateString("en-US",{weekday:"long",timeZone:"UTC"})+" · "+D(date).toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric",timeZone:"UTC"})}):null,
+      day.title?el("div",{class:"tt",text:day.title}):null));
+    const evs=el("div",{class:"gv-evs"});
+    auto[i].checkout.forEach(s=>evs.append(autoEvent("checkout","Check out from "+s.title)));
+    day.items.forEach(it=>evs.append(eventBlock(it)));
+    auto[i].overnight.forEach(s=>evs.append(autoEvent("overnight","Overnight at "+s.title,[s.room,s.meal?"("+s.meal+")":""].filter(Boolean).join(" "))));
+    if(!evs.childNodes.length)evs.append(autoEvent("star","A free day to explore at your own pace","Ask us for ideas."));
+    sec.append(evs);
+  });
+
+  // costs
+  const cs=d.costs||{};
+  if(cs.summary||(cs.includes||[]).length||(cs.excludes||[]).length){
+    const co=S("gv-costs","Costs","",IM.costs);
+    co.append(H("Costs"),cs.summary?el("p",{class:"gv-total",text:cs.summary}):null);
+    const fl=el("div",{class:"gv-facts"});
+    if((cs.includes||[]).length)fl.append(el("div",{class:"gv-fact"},el("b",{text:"Included"}),el("ul",{class:"gv-ul"},cs.includes.map(x=>el("li",{text:x})))));
+    if((cs.excludes||[]).length)fl.append(el("div",{class:"gv-fact"},el("b",{text:"Not included"}),el("ul",{class:"gv-ul"},cs.excludes.map(x=>el("li",{text:x})))));
+    if(fl.childNodes.length)co.append(fl);
+    if(cs.notes)co.append(el("p",{class:"gv-text gv-center",style:"margin-top:14px;color:var(--soft);font-style:italic",text:cs.notes}));
+  }
+
+  // consultant, feedback QR
+  const k=d.consultant||{};
+  const hp=S("gv-help","Contact & feedback","",IM.help);
+  const items=[];
+  if(k.email)items.push(el("li",{},el("b",{text:"Email"}),el("a",{href:"mailto:"+k.email},k.email)));
+  if(k.phone)items.push(el("li",{},el("b",{text:"Phone"}),el("a",{href:"tel:+"+digits(k.phone)},k.phone)));
+  if(k.whatsapp)items.push(el("li",{},el("b",{text:"WhatsApp"}),el("a",{href:"https://wa.me/"+digits(k.whatsapp)+"?text="+encodeURIComponent("Hi"+(k.name?" "+k.name.split(" ")[0]:"")+", a question about my itinerary"+(t.ref?" ("+t.ref+")":"")+": "),target:"_blank",rel:"noopener"},"+"+digits(k.whatsapp))));
+  hp.append(H("Contact your travel consultant"),el("div",{class:"gv-consult"},el("span",{class:"av",text:initials(k.name||CONFIG.company)}),
+    el("h3",{text:k.name||CONFIG.company}),el("div",{class:"co",text:[k.role,CONFIG.company].filter(Boolean).join(" · ")}),items.length?el("ul",{class:"gv-clist"},items):null),
+    concernCard(t),
+    el("div",{class:"gv-btnrow noprint"},el("a",{class:"gv-pill ghost",href:CONFIG.reportsUrl+"?tour="+encodeURIComponent(t.ref||t.title||"")+(t.end?"&date="+t.end:"")+"#survey",target:"_blank",rel:"noopener"},icon("star"),"After your trip: tell us how it was")),
+    t.updatedAt?el("p",{class:"gv-upd",text:"Last updated "+fmtStamp(t.updatedAt)+". This page always shows the latest version of your trip."}):null);
+
+  // left photo panel (desktop): shows the photo of the section being read
+  const left=el("aside",{class:"gv-left","aria-hidden":"true"});
+  const layers=[el("img",{alt:""}),el("img",{alt:""})], cap=el("div",{class:"cap"}); let front=0, shown="";
+  left.append(...layers,cap);
+  let ltok=0;
+  const setLeft=s=>{const src=s.img||"";cap.textContent=s.label+(s.sub?" · "+s.sub:"");if(src===shown)return;shown=src;const tok=++ltok;
+    if(!src){layers.forEach(l=>l.classList.remove("on"));return}
+    const back=layers[1-front];
+    const done=()=>{if(tok!==ltok)return;back.classList.add("on");layers[front].classList.remove("on");front=1-front};
+    back.src=src; if(back.decode)back.decode().then(done,done); else back.onload=done};
+  // top bar + menu drawer
+  const navList=el("nav",{"aria-label":"Itinerary sections"});
+  const drawer=el("div",{class:"gv-drawer",role:"dialog","aria-label":"Menu"},el("div",{class:"dh"},el("b",{text:"Your itinerary"}),el("button",{type:"button",class:"gv-iconbtn","aria-label":"Close menu",onclick:()=>closeMenu()},"✕")),navList);
+  const scrim=el("div",{class:"gv-scrim",onclick:()=>closeMenu()});
+  function closeMenu(){drawer.classList.remove("open");scrim.classList.remove("open")}
+  secs.forEach(s=>navList.append(el("button",{type:"button","data-id":s.id,onclick:()=>go(s.id)},el("span",{class:"l",text:s.label}),s.sub?el("span",{class:"s",text:s.sub}):null)));
+  const share=async()=>{const url=location.href.split("#")[0];try{if(navigator.share){await navigator.share({title:t.title,url});return}}catch(_){return}try{await navigator.clipboard.writeText(url);toast("Link copied")}catch(_){toast("Copy the link from the address bar")}};
+  const top=el("header",{class:"gv-top"},
+    el("div",{},el("button",{type:"button",class:"gv-iconbtn","aria-label":"Open menu",onclick:()=>{drawer.classList.add("open");scrim.classList.add("open")}},el("span",{style:"font-size:18px;line-height:1"},"☰"))),
+    logoImg("gv-logo"),
+    el("div",{class:"gv-acts"},
+      el("button",{type:"button",class:"gv-iconbtn","aria-label":"Share this itinerary",title:"Share",onclick:share},icon("share")),
+      el("button",{type:"button",class:"gv-iconbtn","aria-label":"Print or save as PDF",title:"Print or save as PDF",onclick:()=>{try{window.print()}catch(_){}}},icon("print")),
+      el("button",{type:"button",class:"gv-iconbtn","aria-label":"Contact us",title:"Contact us",onclick:()=>go("gv-help")},icon("phone"))));
+  const foot=el("footer",{class:"gv-foot"},logoImg(""),el("div",{},el("b",{text:CONFIG.company}),el("br"),CONFIG.legalName+" · ",el("a",{href:CONFIG.website,target:"_blank",rel:"noopener"},"experiencescaribbean.com")));
+  const wrap=el("div",{class:"gv"+(opts.preview?" preview":""),style:opts.preview?"--pv:40px":null},left,el("div",{class:"gv-right"},top,main,foot));
+  if(opts.preview)drawer.style.setProperty("--pv","40px");
+  root.append(wrap,drawer,scrim);
+  setLeft(secs[0]);
+  // watch which section is being read: inside the right panel on a computer, the page on a phone
+  const rightCol=wrap.querySelector(".gv-right"), wide=window.matchMedia("(min-width:720px)");
+  const watch=()=>{if(!("IntersectionObserver" in window))return;if(guestIO)guestIO.disconnect();
+    guestIO=new IntersectionObserver(es=>{es.forEach(e=>{if(!e.isIntersecting)return;const s=secs.find(x=>x.node===e.target);if(!s)return;setLeft(s);
+      navList.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.id===s.id))})},{root:wide.matches?rightCol:null,rootMargin:"-40% 0px -55% 0px"});
+    secs.forEach(s=>guestIO.observe(s.node))};
+  watch(); if(wide.addEventListener)wide.addEventListener("change",watch);
+}
+function contactLine(){return el("p",{},"Call or WhatsApp ",el("a",{href:"tel:"+CONFIG.helpTel},CONFIG.helpNumber),".")}
+function richText(txt){
+  const frag=document.createDocumentFragment(); let ul=null;
+  txt.split("\n").forEach(line=>{const l=line.trim();if(!l){ul=null;return}
+    if(/^[-•*]\s+/.test(l)){if(!ul){ul=el("ul",{class:"gv-ul"});frag.append(ul)}ul.append(el("li",{text:l.replace(/^[-•*]\s+/,"")}))}
+    else{ul=null;frag.append(el("p",{text:l}))}});
+  return frag;
+}
+// open every collapsed section when printing, so the PDF has everything
+window.addEventListener("beforeprint",()=>document.querySelectorAll("#guestRoot details").forEach(d=>{if(!d.open){d.open=true;d.dataset.pr="1"}}));
+window.addEventListener("afterprint",()=>document.querySelectorAll("#guestRoot details[data-pr]").forEach(d=>{d.open=false;delete d.dataset.pr}));
+
+// ---------- calendar file ----------
+function downloadIcs(t){
+  if(!t.start){toast("Dates aren't set yet.");return}
+  const pad=n=>String(n).padStart(2,"0"), esc=s=>String(s||"").replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
+  const utc=(date,time)=>{const [h,m]=time.split(":").map(Number);const d=new Date(D(date).getTime());d.setUTCHours(h+TZ_OFFSET_H,m,0,0);return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+"T"+pad(d.getUTCHours())+pad(d.getUTCMinutes())+"00Z"};
+  const day=s=>s.replace(/-/g,"");
+  const stamp=new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z";
+  const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Experiences Caribbean//Itinerary//EN","CALSCALE:GREGORIAN","X-WR-CALNAME:"+esc(t.title)];
+  const ev=(id,start,end,sum,desc,loc,allDay)=>{L.push("BEGIN:VEVENT","UID:"+id+"@experiencescaribbean.com","DTSTAMP:"+stamp,allDay?"DTSTART;VALUE=DATE:"+start:"DTSTART:"+start,allDay?"DTEND;VALUE=DATE:"+end:"DTEND:"+end,"SUMMARY:"+esc(sum));if(desc)L.push("DESCRIPTION:"+esc(desc));if(loc)L.push("LOCATION:"+esc(loc));L.push("END:VEVENT")};
+  t.data.days.forEach((dd,i)=>{const date=addDays(t.start,i);dd.items.forEach(it=>{
+    const desc=[it.pickup&&"Pick-up: "+it.pickup,it.dropoff&&"Drop-off: "+it.dropoff,it.confirmation&&"Confirmation: "+it.confirmation,it.details].filter(Boolean).join("\n");
+    if(it.type==="stay"&&it.title){const n=Math.max(1,+it.nights||1);ev(it.id,day(date),day(addDays(date,n)),it.title,desc,it.mapq||it.title,true);return}
+    if(!it.time||it.type==="note")return;
+    const durH=it.type==="flight"&&it.arrive?null:it.type==="transfer"?1:it.type==="meal"?1.5:2;
+    const endT=it.type==="flight"&&it.arrive&&it.arrive>it.time?it.arrive:(()=>{const [h,m]=it.time.split(":").map(Number),mm=h*60+m+Math.round((durH||1)*60);return pad(Math.min(23,Math.floor(mm/60)))+":"+pad(mm%60)})();
+    ev(it.id,utc(date,it.time),utc(date,endT),itemTitle(it),desc,it.type==="transfer"?it.from:it.place||"",false);
+  })});
+  L.push("END:VCALENDAR");
+  const blob=new Blob([L.join("\r\n")],{type:"text/calendar"}), a=el("a",{href:URL.createObjectURL(blob),download:(t.title||"itinerary").replace(/[^\w-]+/g,"-")+".ics"});
+  document.body.append(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);
+  toast("Calendar file ready. Open it to add your trip to your calendar.");
+}
+
+// ---------- guest mode (link with ?t=) ----------
+async function bootGuest(token){
+  $("#guestApp").hidden=false;
+  const root=$("#guestRoot"); root.append(el("div",{class:"g-msg"},el("p",{text:"Loading your itinerary…"})));
+  if(!/^[0-9a-f]{32}$/.test(token)){renderGuest(null,root);return}
+  let r=null;
+  try{
+    const res=await fetch(CONFIG.supabaseUrl+"/rest/v1/rpc/get_itinerary",{method:"POST",headers:{"Content-Type":"application/json",apikey:CONFIG.supabaseKey,Authorization:"Bearer "+CONFIG.supabaseKey},body:JSON.stringify({p_token:token})});
+    if(!res.ok)throw new Error(res.status); r=await res.json();
+  }catch(_){root.replaceChildren(el("div",{class:"g-msg"},el("h1",{text:"Couldn't load your itinerary"}),el("p",{text:"Check your connection and reload the page."}),contactLine()));return}
+  if(!r){renderGuest(null,root);return}
+  const t={id:null,token,ref:r.booking_ref||"",title:r.title||"",guest:r.guest_name||"",start:r.start_date||"",end:r.end_date||"",updatedAt:r.updated_at?Date.parse(r.updated_at):null,data:Object.assign(blankTrip().data,r.data||{})};
+  document.title=(t.title||"Your itinerary")+" · "+CONFIG.company;
+  renderGuest(t,root);
+}
+
+// ---------- staff sign-in (same team list as the incident register) ----------
+let siEmail="";
+async function sendLink(e){
+  e.preventDefault(); const m=$("#siMsg"); siEmail=$("#si-email").value.trim();
+  if(!siEmail||!$("#si-email").checkValidity()){m.textContent="Enter your work email.";return}
+  $("#si-send").disabled=true; m.textContent="Sending…";
+  const ask=()=>sb.auth.signInWithOtp({email:siEmail,options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname}});
+  const noAccount=err=>err&&/signups not allowed|not found|otp_disabled/i.test(err.message);
+  let {error}=await ask();
+  if(noAccount(error)){try{await fetch(CONFIG.supabaseUrl+"/functions/v1/staff-account",{method:"POST",headers:{"Content-Type":"application/json",apikey:CONFIG.supabaseKey,Authorization:"Bearer "+CONFIG.supabaseKey},body:JSON.stringify({email:siEmail})})}catch(_){} ({error}=await ask())}
+  $("#si-send").disabled=false;
+  if(error){m.textContent=noAccount(error)?"This email isn't on the team list. Ask an admin to add you in the incident register's Team page.":errText(error);return}
+  m.textContent="Check your inbox."; $("#signinForm").hidden=true; $("#codeForm").hidden=false; $("#si-code").focus();
+}
+async function verifyCode(e){
+  e.preventDefault(); const m=$("#siMsg"), token=$("#si-code").value.replace(/\s/g,"");
+  if(!token){m.textContent="Type the code from the email.";return}
+  m.textContent="Checking…"; const {error}=await sb.auth.verifyOtp({email:siEmail,token,type:"email"});
+  m.textContent=error?"That code didn't work. It may have expired; send a new one.":"";
+}
+async function handleSession(session){
+  if(!session){staff=null;trips=[];applyMode();show("signin");return}
+  const {data,error}=await sb.from("staff").select("full_name,roles,active").eq("user_id",session.user.id).maybeSingle();
+  if(error||!data||!data.active){staff=null;applyMode();show("signin");$("#siMsg").textContent="You're signed in as "+session.user.email+", but that email isn't on the active team list.";$("#signoutBtn").hidden=false;return}
+  if(!(data.roles||[]).includes("itineraries")){staff=null;applyMode();show("signin");$("#signinForm").hidden=true;$("#codeForm").hidden=true;
+    $("#siMsg").textContent="You're signed in as "+session.user.email+", but you don't have the Itineraries tick yet. Ask an admin to tick Itineraries for you on the Team page of the incident register (reports.experiencescaribbean.com), then reload this page.";$("#signoutBtn").hidden=false;return}
+  staff=data; applyMode(); await Promise.all([loadTrips(),loadLibrary()]);
+  const pend=pendingTourOps(); if(pend){startFromTourOps(pend);return}
+  const h=location.hash.slice(1); show(h==="library"?"library":"list");
+}
+function applyMode(){
+  const m=$("#mode");
+  if(demo){m.hidden=false;m.replaceChildren(el("strong",{text:"Demo."})," Not connected to the database: the example trip is made up and changes disappear on reload.",el("button",{type:"button",onclick:()=>show("guest")},"See the guest view"))}
+  else if(staff){m.hidden=false;m.replaceChildren(el("strong",{text:"Signed in as "+staff.full_name+"."}))}
+  else m.hidden=true;
+  $("#signoutBtn").hidden=demo||!staff;
+}
+
+// ---------- boot ----------
+function boot(){
+  $("#logo1").append(logoImg("hdrlogo"));
+  captureTourOpsHash();
+  const tok=qs.get("t");
+  // guests only need the database address, not the sign-in library
+  if(tok&&CONFIG.supabaseUrl&&CONFIG.supabaseKey){bootGuest(tok.toLowerCase());return}
+  $("#staffApp").hidden=false;
+  ["stay","activity","transfer","flight","meal","note"].forEach(k=>$("#libKind").append(el("option",{value:k,text:k==="stay"?"Hotels":TYPES[k].label+"s"})));
+  document.querySelectorAll("nav.tabs [data-view]").forEach(b=>b.addEventListener("click",()=>leaveEditor(()=>show(b.dataset.view))));
+  $("#brandLink").addEventListener("click",e=>{e.preventDefault();leaveEditor(()=>show("list"))});
+  $("#newBtn").addEventListener("click",openNewDialog);
+  $("#importWeb").addEventListener("click",e=>importWebsite(e.currentTarget));
+  $("#backBtn").addEventListener("click",()=>leaveEditor(()=>show("list")));
+  $("#saveBtn").addEventListener("click",()=>saveTrip());
+  $("#previewBtn").addEventListener("click",()=>show("preview"));
+  $("#closePreview").addEventListener("click",()=>{if(cur)show("edit");else show("list")});
+  ["#q","#fShow"].forEach(s=>$(s).addEventListener("input",renderList));
+  ["#libQ","#libKind"].forEach(s=>$(s).addEventListener("input",renderLibrary));
+  $("#signinForm").addEventListener("submit",sendLink); $("#codeForm").addEventListener("submit",verifyCode);
+  $("#si-back").addEventListener("click",()=>{$("#codeForm").hidden=true;$("#signinForm").hidden=false;$("#siMsg").textContent=""});
+  $("#signoutBtn").addEventListener("click",async()=>{if(sb)await sb.auth.signOut()});
+  document.addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="s"&&!$("#view-edit").hidden){e.preventDefault();saveTrip()}});
+  window.addEventListener("beforeunload",e=>{if(dirty&&!demo){e.preventDefault();e.returnValue=""}});
+  window.addEventListener("resize",()=>document.documentElement.style.setProperty("--hdr",$("#hdr").offsetHeight+"px"));
+  if(demo){
+    trips=[sampleTrip()]; library=sampleLibrary(); applyMode();
+    const h=location.hash.slice(1); const pend=pendingTourOps();
+    if(pend){startFromTourOps(pend);return}
+    show(h==="list"||h==="library"?h:"guest"); return;
+  }
+  if(!window.supabase){$("#view-signin").hidden=false;$("#siMsg").textContent="The sign-in service didn't load. Check your connection and reload the page.";$("#si-send").disabled=true;return}
+  sb=window.supabase.createClient(CONFIG.supabaseUrl,CONFIG.supabaseKey,{auth:{flowType:"implicit",detectSessionInUrl:true,persistSession:true,autoRefreshToken:true}});
+  applyMode(); show("signin");
+  sb.auth.onAuthStateChange((_e,s)=>setTimeout(()=>handleSession(s),0));
+}
+let leaveArmed=0;
+function leaveEditor(go){
+  if($("#view-edit").hidden||!dirty){go();return}
+  if(Date.now()-leaveArmed<4000){dirty=false;go();return}
+  leaveArmed=Date.now(); toast("You have unsaved changes. Press Save, or tap again to leave without saving.");
+}
+boot();
+})();
+</script>
+</body>
+</html>
