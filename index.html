@@ -859,10 +859,16 @@ function captureTourOpsHash(){
   const h=location.hash.slice(1); if(!/^(tourops|sso)=/.test(h))return;
   const prm=new URLSearchParams(h), payload=prm.get("tourops"), sso=prm.get("sso");
   if(payload&&/^[A-Za-z0-9_\-]+$/.test(payload)){try{const p=decodePayload(payload);sessionStorage.setItem("ec_tourops",JSON.stringify(p))}catch(_){toast("That TourOps link couldn't be read.")}}
-  const m=sso&&sso.match(/^(tourops)\.([A-Za-z0-9_\-]{32,128})$/); if(m)ssoTicket={from:m[1],code:m[2]};
+  const m=sso&&sso.match(/^(tourops|reports)\.([A-Za-z0-9_\-]{32,128})$/); if(m)ssoTicket={from:m[1],code:m[2]};
   history.replaceState(null,"",location.pathname+location.search+"#list");
 }
 async function ssoSignIn(t){
+  if(t.from==="reports"){ // from the incident register: same accounts, a one-time sign-in token
+    $("#siMsg").textContent="Signing you in from the incident register…"; $("#signinForm").hidden=true;
+    const r=await sb.auth.verifyOtp({type:"magiclink",token_hash:t.code});
+    if(!r.error)return true;
+    $("#signinForm").hidden=false; $("#siMsg").textContent="That link has expired. Use the Guest itineraries link in the register again, or sign in below."; return false;
+  }
   const where="TourOps";
   $("#siMsg").textContent="Signing you in from "+where+"…"; $("#signinForm").hidden=true;
   let msg="";
