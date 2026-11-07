@@ -1708,13 +1708,15 @@ async function verifyCode(e){
   m.textContent="Checking…"; const {error}=await sb.auth.verifyOtp({email:siEmail,token,type:"email"});
   m.textContent=error?"That code didn't work. It may have expired; send a new one.":"";
 }
+let sessionFor=null;
 async function handleSession(session){
-  if(!session){staff=null;trips=[];applyMode();show("signin");return}
+  if(!session){staff=null;sessionFor=null;trips=[];applyMode();show("signin");return}
+  if(staff&&sessionFor===session.user.id)return; // hourly token refresh: same person, stay where you are (keeps unsaved edits)
   const {data,error}=await sb.from("staff").select("full_name,roles,active").eq("user_id",session.user.id).maybeSingle();
   if(error||!data||!data.active){staff=null;applyMode();show("signin");$("#siMsg").textContent="You're signed in as "+session.user.email+", but that email isn't on the active team list.";$("#signoutBtn").hidden=false;return}
   if(!(data.roles||[]).includes("itineraries")){staff=null;applyMode();show("signin");$("#signinForm").hidden=true;$("#codeForm").hidden=true;
     $("#siMsg").textContent="You're signed in as "+session.user.email+", but you don't have the Itineraries tick yet. Ask an admin to tick Itineraries for you on the Team page of the incident register (reports.experiencescaribbean.com), then reload this page.";$("#signoutBtn").hidden=false;return}
-  staff=data; applyMode(); loadWebCat(); await Promise.all([loadTrips(),loadLibrary()]);
+  staff=data; sessionFor=session.user.id; applyMode(); loadWebCat(); await Promise.all([loadTrips(),loadLibrary()]);
   const pend=pendingTourOps(); if(pend){startFromTourOps(pend);return}
   const h=location.hash.slice(1); show(h==="library"?"library":"list");
 }
