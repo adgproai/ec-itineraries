@@ -1714,6 +1714,9 @@ async function verifyCode(e){
   m.textContent="Checking…"; const {error}=await sb.auth.verifyOtp({email:siEmail,token,type:"email"});
   m.textContent=error?"That code didn't work. It may have expired; send a new one.":"";
 }
+// Lets experiencescaribbean.com show its "Guest itineraries" menu item on this browser.
+// Display only: it grants nothing (the builder still checks the sign-in and the role).
+function setItinFlag(on){try{document.cookie="ec_itin="+(on?"1":"")+"; domain=.experiencescaribbean.com; path=/; max-age="+(on?31536000:0)+"; secure; samesite=lax"}catch(_){}}
 let sessionFor=null;
 async function handleSession(session){
   if(!session){staff=null;sessionFor=null;trips=[];applyMode();show("signin");return}
@@ -1722,7 +1725,7 @@ async function handleSession(session){
   if(error||!data||!data.active){staff=null;applyMode();show("signin");$("#siMsg").textContent="You're signed in as "+session.user.email+", but that email isn't on the active team list.";$("#signoutBtn").hidden=false;return}
   if(!(data.roles||[]).includes("itineraries")){staff=null;applyMode();show("signin");$("#signinForm").hidden=true;$("#codeForm").hidden=true;
     $("#siMsg").textContent="You're signed in as "+session.user.email+", but you don't have the Itineraries tick yet. Ask an admin to tick Itineraries for you on the Team page of the incident register (reports.experiencescaribbean.com), then reload this page.";$("#signoutBtn").hidden=false;return}
-  staff=data; sessionFor=session.user.id; applyMode(); loadWebCat(); await Promise.all([loadTrips(),loadLibrary()]);
+  staff=data; sessionFor=session.user.id; if(!demo)setItinFlag(true); applyMode(); loadWebCat(); await Promise.all([loadTrips(),loadLibrary()]);
   const pend=pendingTourOps(); if(pend){startFromTourOps(pend);return}
   const h=location.hash.slice(1); show(h==="library"?"library":"list");
 }
@@ -1755,7 +1758,7 @@ function boot(){
   ["#libQ","#libKind"].forEach(s=>$(s).addEventListener("input",renderLibrary));
   $("#signinForm").addEventListener("submit",sendLink); $("#codeForm").addEventListener("submit",verifyCode);
   $("#si-back").addEventListener("click",()=>{$("#codeForm").hidden=true;$("#signinForm").hidden=false;$("#siMsg").textContent=""});
-  $("#signoutBtn").addEventListener("click",async()=>{if(sb)await sb.auth.signOut()});
+  $("#signoutBtn").addEventListener("click",async()=>{setItinFlag(false);if(sb)await sb.auth.signOut()});
   document.addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="s"&&!$("#view-edit").hidden){e.preventDefault();saveTrip()}});
   window.addEventListener("beforeunload",e=>{if(dirty&&!demo){e.preventDefault();e.returnValue=""}});
   window.addEventListener("resize",()=>document.documentElement.style.setProperty("--hdr",$("#hdr").offsetHeight+"px"));
